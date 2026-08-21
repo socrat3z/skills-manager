@@ -15,6 +15,9 @@ import { Settings } from "./views/Settings";
 import { ProjectDetail } from "./views/ProjectDetail";
 import { Backup } from "./views/Backup";
 
+import { SkillStudio } from "./views/SkillStudio";
+import { McpManager } from "./views/McpManager";
+
 function ThemedToaster() {
   const { resolvedTheme } = useThemeContext();
   return (
@@ -41,6 +44,9 @@ function App() {
             <Route element={<Layout />}>
               <Route path="/" element={<Dashboard />} />
               <Route path="/my-skills" element={<MySkills />} />
+              <Route path="/mcp" element={<McpManager />} />
+              <Route path="/studio" element={<SkillStudio />} />
+              <Route path="/studio/:skillId" element={<SkillStudio />} />
               <Route path="/global-workspace" element={<WorkspaceView config={CODING_WORKSPACE_CONFIG} />} />
               <Route path="/global-workspace/:agentKey" element={<WorkspaceView config={CODING_WORKSPACE_CONFIG} />} />
               <Route path="/lobster-workspace" element={<WorkspaceView config={LOBSTER_WORKSPACE_CONFIG} />} />
@@ -51,6 +57,7 @@ function App() {
               <Route path="/settings" element={<Settings />} />
             </Route>
           </Routes>
+
           <HelpDialog />
           <CloseActionGuard />
           <FirstRunRestoreDialog />

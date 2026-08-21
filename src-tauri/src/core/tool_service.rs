@@ -19,6 +19,8 @@ pub struct ToolInfo {
     pub project_relative_skills_dir: Option<String>,
     pub has_project_path_override: bool,
     pub category: ToolCategory,
+    pub supports_mcp_standard_json: bool,
+    pub mcp_config_path: Option<String>,
 }
 
 pub fn get_disabled_tools(store: &SkillStore) -> Vec<String> {
@@ -275,6 +277,10 @@ pub fn list_tool_info(store: &SkillStore) -> Vec<ToolInfo> {
             has_project_path_override: !adapter.is_custom
                 && project_overrides.contains_key(&adapter.key),
             category: adapter.category,
+            supports_mcp_standard_json: adapter.mcp_supports_standard_json(),
+            mcp_config_path: adapter
+                .mcp_config_path()
+                .map(|p| p.to_string_lossy().to_string()),
         })
         .collect();
 
@@ -526,6 +532,7 @@ mod tests {
                     skills_dir: legacy_skills.to_string_lossy().into_owned(),
                     project_relative_skills_dir: Some(".legacy/skills".to_string()),
                     category: ToolCategory::Lobster,
+                    ..Default::default()
                 },
                 CustomToolDef {
                     key: "custom_agent".to_string(),
@@ -533,6 +540,7 @@ mod tests {
                     skills_dir: tmp.path().join("custom-skills").to_string_lossy().into_owned(),
                     project_relative_skills_dir: Some(".custom/skills".to_string()),
                     category: ToolCategory::Lobster,
+                    ..Default::default()
                 },
             ],
         )
@@ -558,6 +566,7 @@ mod tests {
                 skills_dir: legacy_skills.to_string_lossy().into_owned(),
                 project_relative_skills_dir: Some(".legacy/skills".to_string()),
                 category: ToolCategory::Lobster,
+                ..Default::default()
             }],
         )
         .unwrap();

@@ -31,6 +31,8 @@ pub struct ToolInfoDto {
     pub project_relative_skills_dir: Option<String>,
     pub has_project_path_override: bool,
     pub category: ToolCategory,
+    pub supports_mcp_standard_json: bool,
+    pub mcp_config_path: Option<String>,
 }
 
 /// Sync active scenario skills to a single tool.
@@ -80,6 +82,8 @@ pub async fn get_tool_status(
                 project_relative_skills_dir: info.project_relative_skills_dir,
                 has_project_path_override: info.has_project_path_override,
                 category: info.category,
+                supports_mcp_standard_json: info.supports_mcp_standard_json,
+                mcp_config_path: info.mcp_config_path,
             })
             .collect();
         let elapsed_ms = start.elapsed().as_millis();
@@ -408,6 +412,7 @@ pub async fn add_custom_tool(
             skills_dir,
             project_relative_skills_dir,
             category: Default::default(),
+            ..Default::default()
         });
         set_custom_tools(&store, &customs)?;
         reconcile_tool_sync_after_path_change(&store, &key);
@@ -470,6 +475,7 @@ mod tests {
             skills_dir: "/tmp/whatever-they-had".to_string(),
             project_relative_skills_dir: Some(".old/skills".to_string()),
             category: ToolCategory::Coding,
+            ..Default::default()
         }];
         store
             .set_setting("custom_tools", &serde_json::to_string(&customs).unwrap())
@@ -585,6 +591,7 @@ mod tests {
             skills_dir: target_base.to_string_lossy().to_string(),
             project_relative_skills_dir: None,
             category: Default::default(),
+            ..Default::default()
         }];
         store
             .set_setting(

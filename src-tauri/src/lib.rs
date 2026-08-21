@@ -1014,6 +1014,14 @@ pub fn run() {
             commands::skills::delete_tag,
             commands::skills::cancel_install,
             commands::skills::batch_import_folder,
+            commands::skills::list_skill_files,
+            commands::skills::read_skill_file,
+            commands::skills::save_skill_file,
+            commands::skills::create_skill_file,
+            commands::skills::delete_skill_file,
+            commands::skills::create_custom_skill,
+            commands::skills::commit_skill_changes,
+            commands::skills::generate_ai_skill_content,
             // Sync
             commands::sync::sync_skill_to_tool,
             commands::sync::unsync_skill_from_tool,
@@ -1107,7 +1115,34 @@ pub fn run() {
             commands::projects::reorder_projects,
             commands::presets::get_preset_skill_order,
             commands::presets::reorder_preset_skills,
+            // MCP
+            commands::mcp::get_mcp_inventory,
+            commands::mcp::save_mcp_server,
+            commands::mcp::delete_mcp_server,
+            commands::mcp::toggle_mcp_server,
+            commands::mcp::sync_all_mcp_servers,
+            commands::mcp::get_mcp_presets,
+            commands::mcp::export_mcp_config,
+            commands::mcp::import_mcp_config,
+            commands::mcp::fetch_mcp_marketplace_servers,
+            commands::mcp::validate_mcp_server,
+            commands::mcp::resolve_mcp_command_path,
+            commands::mcp::ping_mcp_server,
+            commands::mcp::bulk_toggle_harness,
+            commands::mcp::get_mcp_profiles,
+            commands::mcp::activate_mcp_profile,
+            commands::mcp::backup_harness_config,
+            commands::mcp::get_harness_backups,
+            commands::mcp::restore_harness_config,
+            commands::mcp::get_git_mcp_sources,
+            commands::mcp::add_git_mcp_source,
+            commands::mcp::sync_git_mcp_sources,
+            commands::mcp::delete_git_mcp_source,
+            commands::mcp::get_harness_config_content,
+            commands::mcp::save_harness_config_content,
         ])
+
+
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }

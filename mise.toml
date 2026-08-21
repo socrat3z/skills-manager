@@ -1,0 +1,43 @@
+[tools]
+rust = "stable"
+node = "22"
+
+[tasks.install]
+description = "Install frontend and CLI dependencies"
+run = "npm ci"
+
+[tasks."setup:targets"]
+description = "Install Rust targets for Windows ARM64 and x64"
+run = "rustup target add aarch64-pc-windows-msvc x86_64-pc-windows-msvc"
+
+[tasks.build]
+description = "Build Tauri app for Windows ARM64"
+depends = ["build:arm64"]
+
+[tasks."build:arm64"]
+description = "Build Tauri app for Windows ARM64"
+run = "powershell -ExecutionPolicy Bypass -File scripts/build-win.ps1 aarch64-pc-windows-msvc"
+
+[tasks."build:x64"]
+description = "Build Tauri app for Windows x64"
+run = "powershell -ExecutionPolicy Bypass -File scripts/build-win.ps1 x86_64-pc-windows-msvc"
+
+[tasks.test]
+description = "Run tests (Rust unit tests and frontend check)"
+depends = ["test:rust", "test:frontend"]
+
+[tasks."test:rust"]
+description = "Run Rust unit tests"
+run = "powershell -ExecutionPolicy Bypass -File scripts/test-win.ps1"
+
+[tasks."test:frontend"]
+description = "Run frontend typecheck"
+run = "npm run build"
+
+[tasks.dev]
+description = "Start Tauri app in development mode"
+run = "powershell -ExecutionPolicy Bypass -File scripts/dev-win.ps1"
+
+
+
+

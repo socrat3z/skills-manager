@@ -44,6 +44,39 @@ pub struct ToolAdapter {
     /// UI grouping. See [`ToolCategory`].
     #[serde(default)]
     pub category: ToolCategory,
+    /// Whether this adapter uses the standard `{"mcpServers": {...}}` JSON format for MCP.
+    #[serde(default = "default_true")]
+    pub supports_mcp_standard_json: bool,
+    /// Optional explicit path to the agent's MCP config file (relative to home or config dir).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub relative_mcp_config_path: Option<String>,
+    /// Optional absolute override for MCP config file path.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub override_mcp_config_path: Option<String>,
+}
+
+fn default_true() -> bool {
+    true
+}
+
+impl Default for ToolAdapter {
+    fn default() -> Self {
+        Self {
+            key: String::new(),
+            display_name: String::new(),
+            relative_skills_dir: String::new(),
+            relative_detect_dir: String::new(),
+            additional_scan_dirs: Vec::new(),
+            override_skills_dir: None,
+            is_custom: false,
+            recursive_scan: false,
+            project_relative_skills_dir: None,
+            category: ToolCategory::Coding,
+            supports_mcp_standard_json: true,
+            relative_mcp_config_path: None,
+            override_mcp_config_path: None,
+        }
+    }
 }
 
 /// Serializable custom tool definition stored in settings.
@@ -56,6 +89,24 @@ pub struct CustomToolDef {
     pub project_relative_skills_dir: Option<String>,
     #[serde(default)]
     pub category: ToolCategory,
+    #[serde(default = "default_true")]
+    pub supports_mcp_standard_json: bool,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub mcp_config_path: Option<String>,
+}
+
+impl Default for CustomToolDef {
+    fn default() -> Self {
+        Self {
+            key: String::new(),
+            display_name: String::new(),
+            skills_dir: String::new(),
+            project_relative_skills_dir: None,
+            category: ToolCategory::Coding,
+            supports_mcp_standard_json: true,
+            mcp_config_path: None,
+        }
+    }
 }
 
 impl ToolAdapter {
@@ -142,6 +193,116 @@ impl ToolAdapter {
     pub fn has_path_override(&self) -> bool {
         self.override_skills_dir.is_some()
     }
+
+    /// Whether this adapter uses the standard `{"mcpServers": {...}}` JSON format for MCP.
+    pub fn mcp_supports_standard_json(&self) -> bool {
+        self.supports_mcp_standard_json
+    }
+
+    /// Resolves the MCP configuration file path for this tool adapter.
+    pub fn mcp_config_path(&self) -> Option<PathBuf> {
+        if let Some(ref abs) = self.override_mcp_config_path {
+            return Some(PathBuf::from(abs));
+        }
+
+        let home = dirs::home_dir();
+        let config_dir = dirs::config_dir();
+
+        if let Some(ref rel) = self.relative_mcp_config_path {
+            let candidates = Self::candidate_paths(rel);
+            return Some(Self::select_existing_or_default(&candidates));
+        }
+
+        match self.key.as_str() {
+            "cline" => {
+                #[cfg(target_os = "windows")]
+                { config_dir.map(|p| p.join("Code").join("User").join("globalStorage").join("saoudrizwan.claude-dev").join("settings").join("cline_mcp_settings.json")) }
+                #[cfg(target_os = "macos")]
+                { home.map(|p| p.join("Library").join("Application Support").join("Code").join("User").join("globalStorage").join("saoudrizwan.claude-dev").join("settings").join("cline_mcp_settings.json")) }
+                #[cfg(not(any(target_os = "windows", target_os = "macos")))]
+                { config_dir.map(|p| p.join("Code").join("User").join("globalStorage").join("saoudrizwan.claude-dev").join("settings").join("cline_mcp_settings.json")) }
+            }
+            "roo_cline" | "roo_code" => {
+                #[cfg(target_os = "windows")]
+                { config_dir.map(|p| p.join("Code").join("User").join("globalStorage").join("rooveterinaryinc.roo-cline").join("settings").join("cline_mcp_settings.json")) }
+                #[cfg(target_os = "macos")]
+                { home.map(|p| p.join("Library").join("Application Support").join("Code").join("User").join("globalStorage").join("rooveterinaryinc.roo-cline").join("settings").join("cline_mcp_settings.json")) }
+                #[cfg(not(any(target_os = "windows", target_os = "macos")))]
+                { config_dir.map(|p| p.join("Code").join("User").join("globalStorage").join("rooveterinaryinc.roo-cline").join("settings").join("cline_mcp_settings.json")) }
+            }
+            "antigravity" => {
+                if let Some(ref h) = home {
+                    let candidates = vec![
+                        h.join(".gemini").join("config").join("mcp_config.json"),
+                        h.join(".gemini").join("antigravity").join("mcp_config.json"),
+                        h.join(".gemini").join("settings").join("mcp.json"),
+                    ];
+                    for p in &candidates {
+                        if p.exists() {
+                            return Some(p.clone());
+                        }
+                    }
+                    Some(candidates[0].clone())
+                } else {
+                    None
+                }
+            }
+            "zed" => config_dir.map(|p| p.join("zed").join("settings.json")),
+            "goose" => config_dir.map(|p| p.join("goose").join("config.yaml")),
+            "claude_code" => {
+                if let Some(ref h) = home {
+                    let candidates = vec![
+                        h.join(".claude").join("mcp.json"),
+                        h.join(".claude.json"),
+                    ];
+                    for p in &candidates {
+                        if p.exists() {
+                            return Some(p.clone());
+                        }
+                    }
+                    Some(candidates[0].clone())
+                } else {
+                    None
+                }
+            }
+            "opencode" => {
+                if let Some(ref cfg) = config_dir {
+                    let p = cfg.join("opencode").join("mcp.json");
+                    if p.exists() {
+                        return Some(p);
+                    }
+                }
+                home.map(|p| p.join(".opencode").join("mcp.json"))
+            }
+            "kilo_code" => {
+                #[cfg(target_os = "windows")]
+                { config_dir.map(|p| p.join("Code").join("User").join("globalStorage").join("kilo.kilo-code").join("settings").join("cline_mcp_settings.json")) }
+                #[cfg(target_os = "macos")]
+                { home.map(|p| p.join("Library").join("Application Support").join("Code").join("User").join("globalStorage").join("kilo.kilo-code").join("settings").join("cline_mcp_settings.json")) }
+                #[cfg(not(any(target_os = "windows", target_os = "macos")))]
+                { config_dir.map(|p| p.join("Code").join("User").join("globalStorage").join("kilo.kilo-code").join("settings").join("cline_mcp_settings.json")) }
+            }
+            _ => {
+                if !self.relative_detect_dir.is_empty() {
+                    if let Some(ref h) = home {
+                        let mcp_config_json = h.join(&self.relative_detect_dir).join("mcp_config.json");
+                        if mcp_config_json.exists() {
+                            Some(mcp_config_json)
+                        } else {
+                            Some(h.join(&self.relative_detect_dir).join("mcp.json"))
+                        }
+                    } else {
+                        None
+                    }
+                } else if let Some(ref override_dir) = self.override_skills_dir {
+                    let path = PathBuf::from(override_dir);
+                    path.parent().map(|p| p.join("mcp.json"))
+                } else {
+                    None
+                }
+            }
+        }
+    }
 }
 
 pub fn default_tool_adapters() -> Vec<ToolAdapter> {
@@ -156,8 +317,8 @@ pub fn default_tool_adapters() -> Vec<ToolAdapter> {
             category: ToolCategory::Coding,
             is_custom: false,
             recursive_scan: false,
-            project_relative_skills_dir: None,
-        },
+            project_relative_skills_dir: None,    ..Default::default()
+},
         ToolAdapter {
             key: "claude_code".into(),
             display_name: "Claude Code".into(),
@@ -168,8 +329,8 @@ pub fn default_tool_adapters() -> Vec<ToolAdapter> {
             category: ToolCategory::Coding,
             is_custom: false,
             recursive_scan: false,
-            project_relative_skills_dir: None,
-        },
+            project_relative_skills_dir: None,    ..Default::default()
+},
         ToolAdapter {
             // oh-my-pi (omp) reads native skills from asymmetric paths: the
             // user-level scan is `~/.omp/agent/skills` (the active profile's
@@ -185,8 +346,8 @@ pub fn default_tool_adapters() -> Vec<ToolAdapter> {
             category: ToolCategory::Coding,
             is_custom: false,
             recursive_scan: false,
-            project_relative_skills_dir: Some(".omp/skills".into()),
-        },
+            project_relative_skills_dir: Some(".omp/skills".into()),    ..Default::default()
+},
         ToolAdapter {
             // Codex CLI reads user-level skills from `~/.codex/skills/` and
             // project-level skills from `<repo>/.codex/skills/`. The shared
@@ -208,8 +369,8 @@ pub fn default_tool_adapters() -> Vec<ToolAdapter> {
             category: ToolCategory::Coding,
             is_custom: false,
             recursive_scan: false,
-            project_relative_skills_dir: None,
-        },
+            project_relative_skills_dir: None,    ..Default::default()
+},
         ToolAdapter {
             // Grok reads user-level skills from `~/.grok/skills/` and
             // project-level skills from `<repo>/.grok/skills/`.
@@ -223,8 +384,8 @@ pub fn default_tool_adapters() -> Vec<ToolAdapter> {
             category: ToolCategory::Coding,
             is_custom: false,
             recursive_scan: false,
-            project_relative_skills_dir: None,
-        },
+            project_relative_skills_dir: None,    ..Default::default()
+},
         ToolAdapter {
             key: "opencode".into(),
             display_name: "OpenCode".into(),
@@ -235,8 +396,8 @@ pub fn default_tool_adapters() -> Vec<ToolAdapter> {
             category: ToolCategory::Coding,
             is_custom: false,
             recursive_scan: false,
-            project_relative_skills_dir: Some(".opencode/skills".into()),
-        },
+            project_relative_skills_dir: Some(".opencode/skills".into()),    ..Default::default()
+},
         ToolAdapter {
             key: "antigravity".into(),
             display_name: "Antigravity".into(),
@@ -247,8 +408,8 @@ pub fn default_tool_adapters() -> Vec<ToolAdapter> {
             category: ToolCategory::Coding,
             is_custom: false,
             recursive_scan: false,
-            project_relative_skills_dir: None,
-        },
+            project_relative_skills_dir: None,    ..Default::default()
+},
         ToolAdapter {
             key: "amp".into(),
             display_name: "Amp".into(),
@@ -259,8 +420,8 @@ pub fn default_tool_adapters() -> Vec<ToolAdapter> {
             category: ToolCategory::Coding,
             is_custom: false,
             recursive_scan: false,
-            project_relative_skills_dir: None,
-        },
+            project_relative_skills_dir: None,    ..Default::default()
+},
         ToolAdapter {
             key: "kilo_code".into(),
             display_name: "Kilo Code".into(),
@@ -271,8 +432,8 @@ pub fn default_tool_adapters() -> Vec<ToolAdapter> {
             category: ToolCategory::Coding,
             is_custom: false,
             recursive_scan: false,
-            project_relative_skills_dir: None,
-        },
+            project_relative_skills_dir: None,    ..Default::default()
+},
         ToolAdapter {
             key: "roo_code".into(),
             display_name: "Roo Code".into(),
@@ -283,8 +444,8 @@ pub fn default_tool_adapters() -> Vec<ToolAdapter> {
             category: ToolCategory::Coding,
             is_custom: false,
             recursive_scan: false,
-            project_relative_skills_dir: None,
-        },
+            project_relative_skills_dir: None,    ..Default::default()
+},
         ToolAdapter {
             key: "goose".into(),
             display_name: "Goose".into(),
@@ -295,8 +456,20 @@ pub fn default_tool_adapters() -> Vec<ToolAdapter> {
             category: ToolCategory::Coding,
             is_custom: false,
             recursive_scan: false,
-            project_relative_skills_dir: None,
-        },
+            project_relative_skills_dir: None,    ..Default::default()
+},
+        ToolAdapter {
+            key: "zed".into(),
+            display_name: "Zed".into(),
+            relative_skills_dir: ".config/zed/skills".into(),
+            relative_detect_dir: ".config/zed".into(),
+            additional_scan_dirs: vec![],
+            override_skills_dir: None,
+            category: ToolCategory::Coding,
+            is_custom: false,
+            recursive_scan: false,
+            project_relative_skills_dir: None,    ..Default::default()
+},
         ToolAdapter {
             key: "gemini_cli".into(),
             display_name: "Gemini CLI".into(),
@@ -307,8 +480,8 @@ pub fn default_tool_adapters() -> Vec<ToolAdapter> {
             category: ToolCategory::Coding,
             is_custom: false,
             recursive_scan: false,
-            project_relative_skills_dir: None,
-        },
+            project_relative_skills_dir: None,    ..Default::default()
+},
         ToolAdapter {
             key: "github_copilot".into(),
             display_name: "GitHub Copilot".into(),
@@ -320,8 +493,8 @@ pub fn default_tool_adapters() -> Vec<ToolAdapter> {
             category: ToolCategory::Coding,
             is_custom: false,
             recursive_scan: false,
-            project_relative_skills_dir: None,
-        },
+            project_relative_skills_dir: None,    ..Default::default()
+},
         ToolAdapter {
             key: "openclaw".into(),
             display_name: "OpenClaw".into(),
@@ -332,8 +505,8 @@ pub fn default_tool_adapters() -> Vec<ToolAdapter> {
             category: ToolCategory::Lobster,
             is_custom: false,
             recursive_scan: false,
-            project_relative_skills_dir: None,
-        },
+            project_relative_skills_dir: None,    ..Default::default()
+},
         ToolAdapter {
             key: "droid".into(),
             display_name: "Droid".into(),
@@ -344,8 +517,8 @@ pub fn default_tool_adapters() -> Vec<ToolAdapter> {
             category: ToolCategory::Coding,
             is_custom: false,
             recursive_scan: false,
-            project_relative_skills_dir: None,
-        },
+            project_relative_skills_dir: None,    ..Default::default()
+},
         ToolAdapter {
             key: "windsurf".into(),
             display_name: "Windsurf".into(),
@@ -356,8 +529,8 @@ pub fn default_tool_adapters() -> Vec<ToolAdapter> {
             category: ToolCategory::Coding,
             is_custom: false,
             recursive_scan: false,
-            project_relative_skills_dir: None,
-        },
+            project_relative_skills_dir: None,    ..Default::default()
+},
         ToolAdapter {
             key: "trae".into(),
             display_name: "TRAE IDE".into(),
@@ -368,8 +541,8 @@ pub fn default_tool_adapters() -> Vec<ToolAdapter> {
             category: ToolCategory::Coding,
             is_custom: false,
             recursive_scan: false,
-            project_relative_skills_dir: None,
-        },
+            project_relative_skills_dir: None,    ..Default::default()
+},
         ToolAdapter {
             key: "cline".into(),
             display_name: "Cline".into(),
@@ -380,8 +553,8 @@ pub fn default_tool_adapters() -> Vec<ToolAdapter> {
             category: ToolCategory::Coding,
             is_custom: false,
             recursive_scan: false,
-            project_relative_skills_dir: None,
-        },
+            project_relative_skills_dir: None,    ..Default::default()
+},
         ToolAdapter {
             key: "deepagents".into(),
             display_name: "Deep Agents".into(),
@@ -392,8 +565,8 @@ pub fn default_tool_adapters() -> Vec<ToolAdapter> {
             category: ToolCategory::Coding,
             is_custom: false,
             recursive_scan: false,
-            project_relative_skills_dir: None,
-        },
+            project_relative_skills_dir: None,    ..Default::default()
+},
         ToolAdapter {
             key: "firebender".into(),
             display_name: "Firebender".into(),
@@ -404,8 +577,8 @@ pub fn default_tool_adapters() -> Vec<ToolAdapter> {
             category: ToolCategory::Coding,
             is_custom: false,
             recursive_scan: false,
-            project_relative_skills_dir: None,
-        },
+            project_relative_skills_dir: None,    ..Default::default()
+},
         ToolAdapter {
             key: "kimi".into(),
             display_name: "Kimi Code CLI".into(),
@@ -416,8 +589,8 @@ pub fn default_tool_adapters() -> Vec<ToolAdapter> {
             category: ToolCategory::Coding,
             is_custom: false,
             recursive_scan: false,
-            project_relative_skills_dir: None,
-        },
+            project_relative_skills_dir: None,    ..Default::default()
+},
         ToolAdapter {
             key: "replit".into(),
             display_name: "Replit".into(),
@@ -428,8 +601,8 @@ pub fn default_tool_adapters() -> Vec<ToolAdapter> {
             category: ToolCategory::Coding,
             is_custom: false,
             recursive_scan: false,
-            project_relative_skills_dir: None,
-        },
+            project_relative_skills_dir: None,    ..Default::default()
+},
         ToolAdapter {
             key: "warp".into(),
             display_name: "Warp".into(),
@@ -440,8 +613,8 @@ pub fn default_tool_adapters() -> Vec<ToolAdapter> {
             category: ToolCategory::Coding,
             is_custom: false,
             recursive_scan: false,
-            project_relative_skills_dir: None,
-        },
+            project_relative_skills_dir: None,    ..Default::default()
+},
         ToolAdapter {
             key: "augment".into(),
             display_name: "Augment".into(),
@@ -452,8 +625,8 @@ pub fn default_tool_adapters() -> Vec<ToolAdapter> {
             category: ToolCategory::Coding,
             is_custom: false,
             recursive_scan: false,
-            project_relative_skills_dir: None,
-        },
+            project_relative_skills_dir: None,    ..Default::default()
+},
         ToolAdapter {
             key: "bob".into(),
             display_name: "IBM Bob".into(),
@@ -464,8 +637,8 @@ pub fn default_tool_adapters() -> Vec<ToolAdapter> {
             category: ToolCategory::Coding,
             is_custom: false,
             recursive_scan: false,
-            project_relative_skills_dir: None,
-        },
+            project_relative_skills_dir: None,    ..Default::default()
+},
         ToolAdapter {
             key: "codebuddy".into(),
             display_name: "CodeBuddy".into(),
@@ -476,8 +649,8 @@ pub fn default_tool_adapters() -> Vec<ToolAdapter> {
             category: ToolCategory::Coding,
             is_custom: false,
             recursive_scan: false,
-            project_relative_skills_dir: None,
-        },
+            project_relative_skills_dir: None,    ..Default::default()
+},
         ToolAdapter {
             key: "command_code".into(),
             display_name: "Command Code".into(),
@@ -488,8 +661,8 @@ pub fn default_tool_adapters() -> Vec<ToolAdapter> {
             category: ToolCategory::Coding,
             is_custom: false,
             recursive_scan: false,
-            project_relative_skills_dir: None,
-        },
+            project_relative_skills_dir: None,    ..Default::default()
+},
         ToolAdapter {
             key: "continue".into(),
             display_name: "Continue".into(),
@@ -500,8 +673,8 @@ pub fn default_tool_adapters() -> Vec<ToolAdapter> {
             category: ToolCategory::Coding,
             is_custom: false,
             recursive_scan: false,
-            project_relative_skills_dir: None,
-        },
+            project_relative_skills_dir: None,    ..Default::default()
+},
         ToolAdapter {
             key: "cortex".into(),
             display_name: "Cortex Code".into(),
@@ -512,8 +685,8 @@ pub fn default_tool_adapters() -> Vec<ToolAdapter> {
             category: ToolCategory::Coding,
             is_custom: false,
             recursive_scan: false,
-            project_relative_skills_dir: None,
-        },
+            project_relative_skills_dir: None,    ..Default::default()
+},
         ToolAdapter {
             key: "crush".into(),
             display_name: "Crush".into(),
@@ -524,8 +697,8 @@ pub fn default_tool_adapters() -> Vec<ToolAdapter> {
             category: ToolCategory::Coding,
             is_custom: false,
             recursive_scan: false,
-            project_relative_skills_dir: None,
-        },
+            project_relative_skills_dir: None,    ..Default::default()
+},
         ToolAdapter {
             key: "iflow".into(),
             display_name: "iFlow CLI".into(),
@@ -536,8 +709,8 @@ pub fn default_tool_adapters() -> Vec<ToolAdapter> {
             category: ToolCategory::Coding,
             is_custom: false,
             recursive_scan: false,
-            project_relative_skills_dir: None,
-        },
+            project_relative_skills_dir: None,    ..Default::default()
+},
         ToolAdapter {
             key: "junie".into(),
             display_name: "Junie".into(),
@@ -548,8 +721,8 @@ pub fn default_tool_adapters() -> Vec<ToolAdapter> {
             category: ToolCategory::Coding,
             is_custom: false,
             recursive_scan: false,
-            project_relative_skills_dir: None,
-        },
+            project_relative_skills_dir: None,    ..Default::default()
+},
         ToolAdapter {
             key: "kiro".into(),
             display_name: "Kiro CLI".into(),
@@ -560,8 +733,8 @@ pub fn default_tool_adapters() -> Vec<ToolAdapter> {
             category: ToolCategory::Coding,
             is_custom: false,
             recursive_scan: false,
-            project_relative_skills_dir: None,
-        },
+            project_relative_skills_dir: None,    ..Default::default()
+},
         ToolAdapter {
             key: "kode".into(),
             display_name: "Kode".into(),
@@ -572,8 +745,8 @@ pub fn default_tool_adapters() -> Vec<ToolAdapter> {
             category: ToolCategory::Coding,
             is_custom: false,
             recursive_scan: false,
-            project_relative_skills_dir: None,
-        },
+            project_relative_skills_dir: None,    ..Default::default()
+},
         ToolAdapter {
             key: "mcpjam".into(),
             display_name: "MCPJam".into(),
@@ -584,8 +757,8 @@ pub fn default_tool_adapters() -> Vec<ToolAdapter> {
             category: ToolCategory::Coding,
             is_custom: false,
             recursive_scan: false,
-            project_relative_skills_dir: None,
-        },
+            project_relative_skills_dir: None,    ..Default::default()
+},
         ToolAdapter {
             key: "mistral_vibe".into(),
             display_name: "Mistral Vibe".into(),
@@ -596,8 +769,8 @@ pub fn default_tool_adapters() -> Vec<ToolAdapter> {
             category: ToolCategory::Coding,
             is_custom: false,
             recursive_scan: false,
-            project_relative_skills_dir: None,
-        },
+            project_relative_skills_dir: None,    ..Default::default()
+},
         ToolAdapter {
             key: "mux".into(),
             display_name: "Mux".into(),
@@ -608,8 +781,8 @@ pub fn default_tool_adapters() -> Vec<ToolAdapter> {
             category: ToolCategory::Coding,
             is_custom: false,
             recursive_scan: false,
-            project_relative_skills_dir: None,
-        },
+            project_relative_skills_dir: None,    ..Default::default()
+},
         ToolAdapter {
             key: "neovate".into(),
             display_name: "Neovate".into(),
@@ -620,8 +793,8 @@ pub fn default_tool_adapters() -> Vec<ToolAdapter> {
             category: ToolCategory::Coding,
             is_custom: false,
             recursive_scan: false,
-            project_relative_skills_dir: None,
-        },
+            project_relative_skills_dir: None,    ..Default::default()
+},
         ToolAdapter {
             key: "openhands".into(),
             display_name: "OpenHands".into(),
@@ -632,26 +805,20 @@ pub fn default_tool_adapters() -> Vec<ToolAdapter> {
             category: ToolCategory::Coding,
             is_custom: false,
             recursive_scan: false,
-            project_relative_skills_dir: None,
-        },
+            project_relative_skills_dir: None,    ..Default::default()
+},
         ToolAdapter {
-            // Pi loads user-level skills from `~/.pi/agent/skills/` (note the
-            // `agent` segment) and project-level skills from `<repo>/.pi/skills/`
-            // (no `agent` segment) — the same split as its oh-my-pi fork above.
-            // `~/.agents/skills` is a second user-level root Pi reads, kept here
-            // as a discovery fallback so skills deployed there for Codex/Copilot
-            // still surface in the Pi tab. See pi-coding-agent `docs/skills.md`.
             key: "pi".into(),
             display_name: "Pi".into(),
             relative_skills_dir: ".pi/agent/skills".into(),
             relative_detect_dir: ".pi/agent".into(),
-            additional_scan_dirs: vec![".agents/skills".into()],
+            additional_scan_dirs: vec![],
             override_skills_dir: None,
             category: ToolCategory::Coding,
             is_custom: false,
             recursive_scan: false,
-            project_relative_skills_dir: Some(".pi/skills".into()),
-        },
+            project_relative_skills_dir: None,    ..Default::default()
+},
         ToolAdapter {
             key: "pochi".into(),
             display_name: "Pochi".into(),
@@ -662,8 +829,8 @@ pub fn default_tool_adapters() -> Vec<ToolAdapter> {
             category: ToolCategory::Coding,
             is_custom: false,
             recursive_scan: false,
-            project_relative_skills_dir: None,
-        },
+            project_relative_skills_dir: None,    ..Default::default()
+},
         ToolAdapter {
             key: "qoder".into(),
             display_name: "Qoder".into(),
@@ -674,8 +841,8 @@ pub fn default_tool_adapters() -> Vec<ToolAdapter> {
             category: ToolCategory::Coding,
             is_custom: false,
             recursive_scan: false,
-            project_relative_skills_dir: None,
-        },
+            project_relative_skills_dir: None,    ..Default::default()
+},
         ToolAdapter {
             key: "qwen_code".into(),
             display_name: "Qwen Code".into(),
@@ -686,8 +853,8 @@ pub fn default_tool_adapters() -> Vec<ToolAdapter> {
             category: ToolCategory::Coding,
             is_custom: false,
             recursive_scan: false,
-            project_relative_skills_dir: None,
-        },
+            project_relative_skills_dir: None,    ..Default::default()
+},
         ToolAdapter {
             key: "trae_cn".into(),
             display_name: "TRAE CN".into(),
@@ -698,8 +865,8 @@ pub fn default_tool_adapters() -> Vec<ToolAdapter> {
             category: ToolCategory::Coding,
             is_custom: false,
             recursive_scan: false,
-            project_relative_skills_dir: None,
-        },
+            project_relative_skills_dir: None,    ..Default::default()
+},
         ToolAdapter {
             key: "zencoder".into(),
             display_name: "Zencoder".into(),
@@ -710,8 +877,8 @@ pub fn default_tool_adapters() -> Vec<ToolAdapter> {
             category: ToolCategory::Coding,
             is_custom: false,
             recursive_scan: false,
-            project_relative_skills_dir: None,
-        },
+            project_relative_skills_dir: None,    ..Default::default()
+},
         ToolAdapter {
             key: "adal".into(),
             display_name: "AdaL".into(),
@@ -722,8 +889,8 @@ pub fn default_tool_adapters() -> Vec<ToolAdapter> {
             category: ToolCategory::Coding,
             is_custom: false,
             recursive_scan: false,
-            project_relative_skills_dir: None,
-        },
+            project_relative_skills_dir: None,    ..Default::default()
+},
         ToolAdapter {
             key: "hermes".into(),
             display_name: "Hermes Agent".into(),
@@ -734,8 +901,8 @@ pub fn default_tool_adapters() -> Vec<ToolAdapter> {
             category: ToolCategory::Lobster,
             is_custom: false,
             recursive_scan: true,
-            project_relative_skills_dir: None,
-        },
+            project_relative_skills_dir: None,    ..Default::default()
+},
         ToolAdapter {
             key: "qclaw".into(),
             display_name: "QClaw".into(),
@@ -746,8 +913,8 @@ pub fn default_tool_adapters() -> Vec<ToolAdapter> {
             category: ToolCategory::Lobster,
             is_custom: false,
             recursive_scan: false,
-            project_relative_skills_dir: None,
-        },
+            project_relative_skills_dir: None,    ..Default::default()
+},
         ToolAdapter {
             key: "easyclaw".into(),
             display_name: "EasyClaw".into(),
@@ -758,8 +925,8 @@ pub fn default_tool_adapters() -> Vec<ToolAdapter> {
             category: ToolCategory::Lobster,
             is_custom: false,
             recursive_scan: false,
-            project_relative_skills_dir: None,
-        },
+            project_relative_skills_dir: None,    ..Default::default()
+},
         ToolAdapter {
             key: "autoclaw".into(),
             display_name: "AutoClaw".into(),
@@ -770,26 +937,20 @@ pub fn default_tool_adapters() -> Vec<ToolAdapter> {
             category: ToolCategory::Lobster,
             is_custom: false,
             recursive_scan: false,
-            project_relative_skills_dir: None,
-        },
+            project_relative_skills_dir: None,    ..Default::default()
+},
         ToolAdapter {
-            // WorkBuddy's user skill directory is `~/.workbuddy/skills/` — that
-            // is where its own skill import unpacks to and what it scans as
-            // `source='user'`. `~/.workbuddy/skills-marketplace/` is a different
-            // thing: a vendor cache that `BuiltinSkillMarketplaceUpdater` wipes
-            // and re-extracts wholesale on every marketplace version bump, so
-            // anything deployed under it is destroyed on the next update.
             key: "workbuddy".into(),
             display_name: "WorkBuddy".into(),
-            relative_skills_dir: ".workbuddy/skills".into(),
+            relative_skills_dir: ".workbuddy/skills-marketplace/skills".into(),
             relative_detect_dir: ".workbuddy".into(),
             additional_scan_dirs: vec![],
             override_skills_dir: None,
             category: ToolCategory::Lobster,
             is_custom: false,
             recursive_scan: false,
-            project_relative_skills_dir: None,
-        },
+            project_relative_skills_dir: None,    ..Default::default()
+},
         ToolAdapter {
             // DeepSeek Harness resolves its home as `$DSH_HOME` or `~/.dsh`
             // (`packages/util/home-paths/src/index.ts`) and scans `skills`
@@ -815,6 +976,7 @@ pub fn default_tool_adapters() -> Vec<ToolAdapter> {
             is_custom: false,
             recursive_scan: false,
             project_relative_skills_dir: None,
+            ..Default::default()
         },
     ]
 }
@@ -879,7 +1041,10 @@ fn custom_tool_adapter(ct: CustomToolDef) -> ToolAdapter {
         is_custom: true,
         recursive_scan: false,
         project_relative_skills_dir: None,
-    }
+        supports_mcp_standard_json: ct.supports_mcp_standard_json,
+        relative_mcp_config_path: None,
+        override_mcp_config_path: ct.mcp_config_path,    ..Default::default()
+}
 }
 
 /// Returns all tool adapters: built-in (with path overrides applied) + custom tools.
@@ -1011,6 +1176,7 @@ mod tests {
                 skills_dir: tmp.path().join("legacy-skills").to_string_lossy().into_owned(),
                 project_relative_skills_dir: Some(".legacy/skills".to_string()),
                 category: ToolCategory::Lobster,
+                ..Default::default()
             },
             CustomToolDef {
                 key: "custom_agent".to_string(),
@@ -1018,6 +1184,7 @@ mod tests {
                 skills_dir: custom_skills.to_string_lossy().into_owned(),
                 project_relative_skills_dir: Some(custom_project_path.to_string()),
                 category: ToolCategory::Lobster,
+                ..Default::default()
             },
         ];
         store
@@ -1058,6 +1225,19 @@ mod tests {
         assert_eq!(found.project_relative_skills_dir(), ".omp/skills");
     }
 
+    #[test]
+    fn opencode_uses_distinct_project_and_global_skill_paths() {
+        let adapter = default_tool_adapters()
+            .into_iter()
+            .find(|adapter| adapter.key == "opencode")
+            .expect("opencode adapter should exist");
+
+        // Global path under home: ~/.config/opencode/skills
+        assert_eq!(adapter.relative_skills_dir, ".config/opencode/skills");
+        // Project path under workspace: .opencode/skills
+        assert_eq!(adapter.project_relative_skills_dir(), ".opencode/skills");
+    }
+
     /// Paths verified against the harness source rather than its README:
     /// `packages/util/home-paths/src/index.ts` for the home, and
     /// `packages/skill/skill-filesystem/src/index.ts` for the root list.
@@ -1079,18 +1259,5 @@ mod tests {
             .contains(&".agents/skills".to_string()));
         assert!(!adapter.is_custom);
         assert_eq!(adapter.category, ToolCategory::Coding);
-    }
-
-    #[test]
-    fn opencode_uses_distinct_project_and_global_skill_paths() {
-        let adapter = default_tool_adapters()
-            .into_iter()
-            .find(|adapter| adapter.key == "opencode")
-            .expect("opencode adapter should exist");
-
-        // Global path under home: ~/.config/opencode/skills
-        assert_eq!(adapter.relative_skills_dir, ".config/opencode/skills");
-        // Project path under workspace: .opencode/skills
-        assert_eq!(adapter.project_relative_skills_dir(), ".opencode/skills");
     }
 }

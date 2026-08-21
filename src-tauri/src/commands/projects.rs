@@ -1392,7 +1392,9 @@ mod tests {
         let link = tmp.path().join("linked-skill");
         fs::create_dir_all(&real).unwrap();
         fs::write(real.join("SKILL.md"), "# hello").unwrap();
-        std::os::windows::fs::symlink_dir(&real, &link).unwrap();
+        if std::os::windows::fs::symlink_dir(&real, &link).is_err() {
+            junction::create(&real, &link).unwrap();
+        }
 
         remove_workspace_skill_target(&link).unwrap();
 

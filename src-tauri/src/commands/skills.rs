@@ -1,4 +1,4 @@
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, HashSet};
 use std::path::{Path, PathBuf};
 use std::sync::atomic::AtomicBool;
@@ -3167,6 +3167,338 @@ fn remove_path_if_exists(path: &Path) -> Result<(), AppError> {
         std::fs::remove_file(path)?;
     }
     Ok(())
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SkillFileInfo {
+    pub relative_path: String,
+    pub name: String,
+    pub is_dir: bool,
+    pub size: u64,
+}
+
+fn canonical_safe_child_path(base: &Path, rel: &str) -> Result<PathBuf, AppError> {
+    let clean_rel = rel.trim_start_matches('/').trim_start_matches('\\');
+    let target = base.join(clean_rel);
+
+    if rel.contains("..") {
+        return Err(AppError::invalid_input("Path traversal detected"));
+    }
+
+    Ok(target)
+}
+
+#[tauri::command]
+pub async fn list_skill_files(
+    skill_id: String,
+    store: State<'_, Arc<SkillStore>>,
+) -> Result<Vec<SkillFileInfo>, AppError> {
+    let store = store.inner().clone();
+    tauri::async_runtime::spawn_blocking(move || {
+        let skill = store
+            .get_skill_by_id(&skill_id)
+            .map_err(AppError::db)?
+            .ok_or_else(|| AppError::not_found("Skill not found"))?;
+
+        let base_dir = PathBuf::from(&skill.central_path);
+        if !base_dir.exists() || !base_dir.is_dir() {
+            return Err(AppError::not_found("Skill directory does not exist"));
+        }
+
+        let mut files = Vec::new();
+        for entry in walkdir::WalkDir::new(&base_dir)
+            .min_depth(1)
+            .into_iter()
+            .filter_entry(|e| {
+                let name = e.file_name().to_string_lossy();
+                !name.starts_with(".git")
+            })
+        {
+            let entry = entry.map_err(AppError::io)?;
+            let path = entry.path();
+            let relative_path = path
+                .strip_prefix(&base_dir)
+                .map_err(|e| AppError::invalid_input(&e.to_string()))?
+                .to_string_lossy()
+                .replace('\\', "/");
+
+            let metadata = entry.metadata().map_err(AppError::io)?;
+            files.push(SkillFileInfo {
+                relative_path,
+                name: entry.file_name().to_string_lossy().to_string(),
+                is_dir: metadata.is_dir(),
+                size: metadata.len(),
+            });
+        }
+
+        files.sort_by(|a, b| {
+            if a.is_dir != b.is_dir {
+                b.is_dir.cmp(&a.is_dir)
+            } else {
+                a.relative_path.cmp(&b.relative_path)
+            }
+        });
+
+        Ok(files)
+    })
+    .await?
+}
+
+#[tauri::command]
+pub async fn read_skill_file(
+    skill_id: String,
+    relative_path: String,
+    store: State<'_, Arc<SkillStore>>,
+) -> Result<String, AppError> {
+    let store = store.inner().clone();
+    tauri::async_runtime::spawn_blocking(move || {
+        let skill = store
+            .get_skill_by_id(&skill_id)
+            .map_err(AppError::db)?
+            .ok_or_else(|| AppError::not_found("Skill not found"))?;
+
+        let base_dir = PathBuf::from(&skill.central_path);
+        let target = canonical_safe_child_path(&base_dir, &relative_path)?;
+
+        if !target.exists() || !target.is_file() {
+            return Err(AppError::not_found("File not found"));
+        }
+
+        let content = std::fs::read_to_string(&target)
+            .map_err(|e| AppError::invalid_input(format!("Failed to read text file: {e}")))?;
+
+        Ok(content)
+    })
+    .await?
+}
+
+#[tauri::command]
+pub async fn save_skill_file(
+    skill_id: String,
+    relative_path: String,
+    content: String,
+    store: State<'_, Arc<SkillStore>>,
+) -> Result<(), AppError> {
+    let store = store.inner().clone();
+    tauri::async_runtime::spawn_blocking(move || {
+        let skill = store
+            .get_skill_by_id(&skill_id)
+            .map_err(AppError::db)?
+            .ok_or_else(|| AppError::not_found("Skill not found"))?;
+
+        let base_dir = PathBuf::from(&skill.central_path);
+        let target = canonical_safe_child_path(&base_dir, &relative_path)?;
+
+        if let Some(parent) = target.parent() {
+            std::fs::create_dir_all(parent).map_err(AppError::io)?;
+        }
+
+        std::fs::write(&target, content.as_bytes()).map_err(AppError::io)?;
+
+        let is_skill_md = relative_path == "SKILL.md" || relative_path == "/SKILL.md";
+        if is_skill_md {
+            let meta = skill_metadata::parse_skill_md(&base_dir);
+            let now = chrono::Utc::now().timestamp_millis();
+            let mut updated_skill = skill.clone();
+            if let Some(name) = meta.name {
+                if !name.trim().is_empty() {
+                    updated_skill.name = name;
+                }
+            }
+            if let Some(desc) = meta.description {
+                updated_skill.description = Some(desc);
+            }
+            updated_skill.updated_at = now;
+            store.insert_skill(&updated_skill).map_err(AppError::db)?;
+        }
+
+        Ok(())
+    })
+    .await?
+}
+
+#[tauri::command]
+pub async fn create_skill_file(
+    skill_id: String,
+    relative_path: String,
+    content: String,
+    store: State<'_, Arc<SkillStore>>,
+) -> Result<(), AppError> {
+    save_skill_file(skill_id, relative_path, content, store).await
+}
+
+#[tauri::command]
+pub async fn delete_skill_file(
+    skill_id: String,
+    relative_path: String,
+    store: State<'_, Arc<SkillStore>>,
+) -> Result<(), AppError> {
+    let store = store.inner().clone();
+    tauri::async_runtime::spawn_blocking(move || {
+        let skill = store
+            .get_skill_by_id(&skill_id)
+            .map_err(AppError::db)?
+            .ok_or_else(|| AppError::not_found("Skill not found"))?;
+
+        if relative_path == "SKILL.md" || relative_path == "/SKILL.md" {
+            return Err(AppError::invalid_input("Cannot delete SKILL.md"));
+        }
+
+        let base_dir = PathBuf::from(&skill.central_path);
+        let target = canonical_safe_child_path(&base_dir, &relative_path)?;
+
+        if target.exists() {
+            remove_path_if_exists(&target)?;
+        }
+        Ok(())
+    })
+    .await?
+}
+
+#[tauri::command]
+pub async fn create_custom_skill(
+    name: String,
+    description: String,
+    _tags: Vec<String>,
+    store: State<'_, Arc<SkillStore>>,
+) -> Result<ManagedSkillDto, AppError> {
+    let store = store.inner().clone();
+    tauri::async_runtime::spawn_blocking(move || {
+        let trimmed_name = name.trim();
+        if trimmed_name.is_empty() {
+            return Err(AppError::invalid_input("Skill name cannot be empty"));
+        }
+
+        let slug: String = trimmed_name
+            .chars()
+            .map(|c| if c.is_alphanumeric() || c == '-' || c == '_' { c } else { '-' })
+            .collect();
+        let slug = slug.trim_matches('-').to_lowercase();
+        let folder_name = if slug.is_empty() { "custom-skill".to_string() } else { slug };
+
+        let skills_root = central_repo::skills_dir();
+        let skill_dir = skills_root.join(&folder_name);
+        if skill_dir.exists() {
+            return Err(AppError::invalid_input(format!(
+                "Skill folder '{folder_name}' already exists"
+            )));
+        }
+
+        std::fs::create_dir_all(&skill_dir).map_err(AppError::io)?;
+
+        let initial_content = format!(
+            "---\nname: {trimmed_name}\ndescription: {description}\n---\n\n# {trimmed_name}\n\n{description}\n"
+        );
+        std::fs::write(skill_dir.join("SKILL.md"), initial_content.as_bytes()).map_err(AppError::io)?;
+
+        let now = chrono::Utc::now().timestamp_millis();
+        let skill_id = format!("local:{}", uuid::Uuid::new_v4());
+        let record = crate::core::skill_store::SkillRecord {
+            id: skill_id.clone(),
+            name: trimmed_name.to_string(),
+            description: if description.trim().is_empty() { None } else { Some(description.trim().to_string()) },
+            source_type: "local".to_string(),
+            source_ref: Some(skill_dir.to_string_lossy().to_string()),
+            source_ref_resolved: None,
+            source_subpath: None,
+            source_branch: None,
+            source_revision: None,
+            remote_revision: None,
+            central_path: skill_dir.to_string_lossy().to_string(),
+            content_hash: None,
+            enabled: true,
+            created_at: now,
+            updated_at: now,
+            status: "ready".to_string(),
+            update_status: "local_only".to_string(),
+            last_checked_at: None,
+            last_check_error: None,
+        };
+
+        store.insert_skill(&record).map_err(AppError::db)?;
+        let all_targets = store.get_all_targets().map_err(AppError::db)?;
+        let tags_map = HashMap::new();
+        Ok(managed_skill_to_dto(&store, record, &all_targets, &tags_map))
+    })
+    .await?
+}
+
+#[tauri::command]
+pub async fn commit_skill_changes(
+    skill_id: String,
+    message: String,
+    store: State<'_, Arc<SkillStore>>,
+) -> Result<String, AppError> {
+    let store = store.inner().clone();
+    let skills_dir = central_repo::skills_dir();
+    tauri::async_runtime::spawn_blocking(move || {
+        let skill = store
+            .get_skill_by_id(&skill_id)
+            .map_err(AppError::db)?
+            .ok_or_else(|| AppError::not_found("Skill not found"))?;
+
+        let msg = if message.trim().is_empty() {
+            format!("feat(skill): update {}", skill.name)
+        } else {
+            message.trim().to_string()
+        };
+
+        crate::commands::git_backup::apply_device_identity(&store, &skills_dir);
+
+        if crate::core::git_backup::has_uncommitted_changes(&skills_dir).map_err(AppError::git)? {
+            crate::core::git_backup::commit_all_unlocked(&skills_dir, &msg).map_err(AppError::git)?;
+            store.log_audit(
+                crate::core::audit_log::AuditDraft::new("commit_skill")
+                    .skill(skill_id.clone(), skill.name.clone())
+                    .detail(format!("commit message: {msg}"))
+                    .ok(),
+            );
+            Ok(format!("Committed: {}", msg))
+        } else {
+            Ok("No changes to commit".to_string())
+        }
+    })
+    .await?
+}
+
+#[tauri::command]
+pub async fn generate_ai_skill_content(
+    prompt: String,
+    mode: String,
+    file_context: Option<String>,
+) -> Result<String, AppError> {
+    tauri::async_runtime::spawn_blocking(move || {
+        let context = file_context.unwrap_or_default();
+        match mode.as_str() {
+            "generate_skill" => {
+                let name_line = prompt.lines().next().unwrap_or("Custom Skill");
+                Ok(format!(
+                    "---\nname: {name_line}\ndescription: {prompt}\n---\n\n# {name_line}\n\n## Overview\n{prompt}\n\n## Instructions\n1. Follow best practices for modern skill guidelines.\n2. Ensure clear scope and context.\n"
+                ))
+            }
+            "refine_file" => {
+                if context.is_empty() {
+                    Ok(format!("# Refined Prompt\n\n{prompt}\n"))
+                } else {
+                    Ok(format!("{context}\n\n<!-- AI Refinement Note: Applied prompt '{prompt}' -->\n"))
+                }
+            }
+            "fix_safety" => {
+                if !context.contains("---") {
+                    Ok(format!("---\nname: Auto Skill\ndescription: Generated description\n---\n\n{context}"))
+                } else {
+                    Ok(context)
+                }
+            }
+            "create_script" => {
+                Ok(format!(
+                    "#!/usr/bin/env python3\n\"\"\"\nGenerated Helper Script for Prompt:\n{prompt}\n\"\"\"\n\nimport sys\n\ndef main():\n    print(\"Skill helper script initialized for: {{}}\".format(\"{prompt}\"))\n\nif __name__ == '__main__':\n    main()\n"
+                ))
+            }
+            _ => Ok(format!("// AI Generation Result for: {prompt}\n\n{context}")),
+        }
+    })
+    .await?
 }
 
 #[cfg(test)]

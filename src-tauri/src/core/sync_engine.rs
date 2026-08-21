@@ -1272,7 +1272,9 @@ mod tests {
         fs::create_dir_all(&real).unwrap();
         fs::write(real.join("SKILL.md"), "# hello").unwrap();
         let link = tmp.path().join("link");
-        std::os::windows::fs::symlink_dir(&real, &link).unwrap();
+        if std::os::windows::fs::symlink_dir(&real, &link).is_err() {
+            junction::create(&real, &link).unwrap();
+        }
 
         remove_target(&link).unwrap();
         assert!(!link.exists());

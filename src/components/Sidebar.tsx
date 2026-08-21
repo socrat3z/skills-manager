@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useMemo } from "react";
 import { DragDropContext, Droppable, Draggable, type DropResult } from "@hello-pangea/dnd";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
+  Code,
   LayoutDashboard,
   Layers,
   Globe,
@@ -16,6 +17,7 @@ import {
   Link2,
   ChevronDown,
   ChevronRight,
+  Server,
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
@@ -167,6 +169,8 @@ export function Sidebar() {
   const NAV_ITEMS = [
     { name: t("sidebar.dashboard"), path: "/", icon: LayoutDashboard },
     { name: t("sidebar.mySkills"), path: "/my-skills", icon: Layers },
+    { name: "Skill Studio", path: "/studio", icon: Code },
+    { name: "MCP Servers", path: "/mcp", icon: Server },
     { name: t("sidebar.installSkills"), path: "/install", icon: Download },
     { name: t("sidebar.backup"), path: "/backup", icon: CloudUpload },
   ];
