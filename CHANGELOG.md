@@ -5,6 +5,57 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.36.0] - 2026-08-29
+
+### Release Overview
+- Your coding agents can now drive Skills Manager themselves — installing, updating and deploying skills on your behalf, through the same library and sync engine the app uses.
+
+### User-facing
+- **Let your agents manage skills** — Claude Code, Codex, Cursor and the rest can now install a skill, deploy it to another agent, or report what is where, by driving Skills Manager rather than writing into an agent's folder behind its back. Sources, preset membership, update tracking and per-agent deployment state all stay intact. The Dashboard offers a one-time setup: pick which agents should be able to do it, and the app installs the `manage-skills` skill and deploys it to exactly those. Nothing is pre-selected, and the prompt disappears for good once you have acted on it or dismissed it — afterwards it is an ordinary library skill, managed from the agent badges on its own card.
+- **The CLI is where agents can find it** — The command-line tool has always shipped inside the desktop app, but on macOS it sat inside the `.app` and on Windows inside the install directory, where nothing could reach it. The app now keeps a copy at `~/.skills-manager/bin/`, refreshed on every launch, so agents can use it without anything being added to your PATH. On Linux the `.deb` and `.rpm` already placed it on PATH and still do.
+- **A refused deployment now says which directory is in the way** — When a deploy would overwrite something Skills Manager does not own, it refuses and leaves your content untouched. Until now the reason arrived as one long sentence, so an agent asked to do the deployment could only read it back to you. It now carries the actual path, which means your agent can name the directory, confirm nothing in it was deleted, and offer to import it into the library or move it aside.
+
+### Developer & Governance
+- New `core/cli_bridge.rs` publishes the bundled CLI to `~/.skills-manager/bin/` off the main thread at startup. A copy rather than a symlink: an AppImage is mounted at a temporary path, Windows reserves symlink creation for administrators, and a relocated `.app` would leave a dangling link. The location is the home directory rather than `central_repo::base_dir()`, which the user can move.
+- A `.version` stamp is written last and removed first, and gates the copy: a stale bridge can be a binary that predates the #363 fix and so deletes user directories a current one refuses to touch, which the database's own `user_version` gate cannot catch because such a fix carries no migration. Invalidation has three fallbacks — unlink, truncate, remove the binary itself — so a locked or read-only stamp on Windows cannot leave the pair vouching for itself; when none can take effect the publish is abandoned rather than run with a stamp that lies. The copy is verified by running `--version` with whole-token equality before it is published.
+- `AppError` gains an optional `details`, omitted from the wire format when absent, and an `ErrorKind::TargetConflict` that the CLI emits as a `TARGET_CONFLICT` envelope carrying `conflicts[].path`. Only an ownership refusal is classified that way: two library skills planning onto one path stays `InvalidInput`, and a target that cannot be inspected is `Io`, since telling a caller to adopt or move content that may not exist is worse than no advice. The refusal wording now has a single definition so the sentence and the structured form cannot drift.
+- The bundled `manage-skills` skill resolves the CLI before anything else, preferring the published copy over whatever is on PATH — a hand-installed binary is often several releases behind while writing the same database. Resolution yields a path to substitute into later commands rather than a shell variable, because each command an agent runs is a new process. An unstamped binary, or a stamp with no binary, stops the skill rather than sending it looking for something that may be older still.
+- Both READMEs now carry the skills.sh badge and the `npx skills add` line, so the skill has an entry point for people who never open the app.
+
+## [1.35.1] - 2026-08-28
+
+### Release Overview
+- In a project with two agents, an edit made under the second one could not reach the Skills Center, and following the status the app then showed would overwrite that edit. Fixed, together with the cases where no push is safe at all.
+
+### User-facing
+- **An edit under any agent now reaches the center** (#327) — A project skill exists once per agent directory and the card aggregates them. The card lit "update to center" if *any* copy was edited, but pushed the copy whose agent name sorted first. Editing under Codex while Claude Code was also configured therefore pushed the untouched Claude copy: the toast said success, nothing of the edit arrived, and the freshly written center then read as newer — so following the card to "update to project" destroyed the edit. The copy that actually carries the edit is pushed now, and the others are realigned from the center afterwards so the card settles instead of flipping. Thanks to @enshulv. Fixes #322.
+- **When no copy can be shown to be safe, nothing is written** — If more than one copy of a skill is anything other than in sync with the center, the update is refused and the conflict is named, rather than picking one and silently stranding the rest. Only "in sync" proves a copy holds nothing of its own: it is a content match, while "center is newer" is decided by timestamp *after* the contents already differed, so such a copy can hold work that a pull would destroy. **This is stricter than before**: two agents each holding their own not-yet-imported copy of the same skill now have to be reconciled into one before the center will accept it.
+
+### Developer & Governance
+- `classify_sync_status` returns `center_newer` only after the content hashes differ, then picks a side by mtime — it is not proof that the project copy is redundant. The realign step treated it as proof, and the refusal threshold was drawn at "edited" rather than "not provably clean"; both let a copy holding unique content be overwritten by a later action the card itself offered.
+- Pushing rebuilds the center directory, moving its mtime to now, which is what turned every stranded copy into `center_newer` — a status whose only remaining card action overwrites all variants, and which the backend's guard does not refuse (it refuses `project_newer` only). That chain, not the push itself, was the data-loss path.
+- Sibling realignment runs serially. Two agents' skills roots can be symlinks onto one directory, and each realign rebuilds its target, so concurrent calls on one path failed for no real reason and the batch counted it as a failure.
+- Three rounds of cross-vendor review; the substantive defects stopped appearing after the second. Widening the refusal made the bookkeeping it was working around unreachable, so the change ends 38 lines shorter than its first draft.
+- Known and unfixed: if two agents' skills roots are symlinks onto one directory, one physical skill scans as two edited copies and the refusal cannot be resolved by editing files. Collapsing roots by canonical path is a scanner change, deliberately not made here.
+- These are frontend-only changes and the repo has no frontend test runner, so `test.yml` does not cover them. Verification was `lint`, `build`, and review.
+
+## [1.35.0] - 2026-08-27
+
+### Release Overview
+- ZCode joins the supported agents, Linux ARM64 gets its own packages, and a fresh install now opens in the language your system is set to instead of always Simplified Chinese.
+- Kimi Code is repointed at the directories it actually reads. Skills synced to Kimi were being written where Kimi never looks — **after upgrading, sync Kimi once more**.
+
+### User-facing
+- **ZCode is supported out of the box** (#370) — User-level skills sync to `~/.zcode/skills/` and project-level skills to `<repo>/.zcode/skills`, the same symmetric layout as Claude Code. Plugin skills under `~/.zcode/cli/plugins/` are deliberately not scanned, matching the Claude Code plugin-marketplace policy. That brings the built-in agent count to 53. Thanks to @brofea, who also supplied the official mark from z.ai rather than a redrawn one. Closes #243, #319.
+- **Kimi Code skills land where Kimi reads them** (#270) — The adapter deployed to `~/.config/agents/skills` and looked for `~/.kimi` to decide Kimi was installed. Those are the *old kimi-cli*'s locations; kimi-code is a separate generation that reads `$KIMI_CODE_HOME/skills/` (default `~/.kimi-code/skills/`) and `<project>/.kimi-code/skills/`. So a sync reported success while Kimi saw nothing, and an installed Kimi was shown as missing. Both are fixed. **Upgrading rewrites the paths but does not move files**: skills already copied to `~/.config/agents/skills` stay there — that directory is still Amp's and Replit's — so Kimi needs one more sync for its skills to arrive. Thanks to @Libeny.
+- **A fresh install opens in your system's language** (#374) — The first-run language was hardcoded to Simplified Chinese, so anyone who does not read it had to find 设置 → 语言 in a UI they could not navigate. The first launch now reads `navigator.languages` and picks the first locale the app can serve, falling back to English. An explicit script beats the region, so `zh-Hans-HK` stays Simplified. An existing choice is never touched — this runs only when neither the saved setting nor localStorage has one. Thanks to @sammcj.
+- **Linux ARM64 has its own packages** (#351) — Releases shipped Linux x86_64, macOS ARM64 and Windows x64; an ARM64 Linux machine had nothing it could run, and the macOS ARM64 assets are Mach-O binaries that will not help. `.deb` and `.rpm` are now built natively on an ARM64 runner. Thanks to @superwjfeng.
+
+### Developer & Governance
+- Retargeting one tool no longer deletes a directory another tool is still deployed to. Adapters can share a skills directory — Amp and Replit both use `~/.config/agents/skills`, and Kimi did until this release — and the stale-target cleanup removed the path outright without checking who else was pointing at it. Introduced by the Kimi move and caught before release by a cross-vendor review; the regression test fails without the guard.
+- `detectLanguage` matches the primary subtag rather than a bare prefix. `startsWith("zh")` also matched `zha` (Zhuang) and `startsWith("en")` matched `enm` (Middle English), consuming the tag and discarding the next entry in the list, which is the one the user actually prefers.
+- Three ZCode pull requests were open at once (#338, #370, #390), none of them answered before the next arrived. #370 was taken for using z.ai's own mark; the other two are closed as superseded with the reason stated. The README count and the path-contract test came from #390's work.
+
 ## [1.34.2] - 2026-08-16
 
 ### Release Overview
