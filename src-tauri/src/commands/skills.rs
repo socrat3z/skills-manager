@@ -3188,6 +3188,142 @@ fn canonical_safe_child_path(base: &Path, rel: &str) -> Result<PathBuf, AppError
     Ok(target)
 }
 
+#[derive(Debug, Clone)]
+struct GitIgnoreRule {
+    negated: bool,
+    dir_only: bool,
+    regex: regex::Regex,
+}
+
+fn parse_skill_gitignore(content: &str) -> Vec<GitIgnoreRule> {
+    let mut rules = Vec::new();
+    for line in content.lines() {
+        let line = line.trim();
+        if line.is_empty() || line.starts_with('#') {
+            continue;
+        }
+
+        let (negated, line) = if let Some(stripped) = line.strip_prefix('!') {
+            (true, stripped.trim())
+        } else {
+            (false, line)
+        };
+
+        let (dir_only, line) = if let Some(stripped) = line.strip_suffix('/') {
+            (true, stripped)
+        } else {
+            (false, line)
+        };
+
+        let clean_pattern = line.trim();
+        if clean_pattern.is_empty() {
+            continue;
+        }
+
+        let is_rooted = clean_pattern.starts_with('/');
+        let core = clean_pattern.strip_prefix('/').unwrap_or(clean_pattern);
+
+        let mut regex_str = String::from("^");
+        if !is_rooted && !core.contains('/') {
+            regex_str.push_str("(?:.*/)?");
+        }
+
+        let mut chars = core.chars().peekable();
+        while let Some(c) = chars.next() {
+            match c {
+                '*' => {
+                    if chars.peek() == Some(&'*') {
+                        chars.next();
+                        if chars.peek() == Some(&'/') {
+                            chars.next();
+                            regex_str.push_str("(?:.*/)?");
+                        } else {
+                            regex_str.push_str(".*");
+                        }
+                    } else {
+                        regex_str.push_str("[^/]*");
+                    }
+                }
+                '?' => regex_str.push_str("[^/]"),
+                '.' | '+' | '(' | ')' | '[' | ']' | '{' | '}' | '^' | '$' | '|' | '\\' => {
+                    regex_str.push('\\');
+                    regex_str.push(c);
+                }
+                _ => regex_str.push(c),
+            }
+        }
+        regex_str.push_str("(?:/.*)?$");
+
+        if let Ok(re) = regex::Regex::new(&regex_str) {
+            rules.push(GitIgnoreRule {
+                negated,
+                dir_only,
+                regex: re,
+            });
+        }
+    }
+    rules
+}
+
+fn is_skill_path_ignored(
+    rel_path: &str,
+    is_dir: bool,
+    repo_and_workdir: Option<(&git2::Repository, &Path)>,
+    custom_rules: &[GitIgnoreRule],
+) -> bool {
+    let normalized = rel_path.trim_matches('/').replace('\\', "/");
+    if normalized.is_empty() {
+        return false;
+    }
+
+    // 1. Definitively skip heavy package/cache directories and temporary noise
+    for segment in normalized.split('/') {
+        if segment == "node_modules"
+            || segment == ".git"
+            || segment == "__pycache__"
+            || segment == ".DS_Store"
+            || segment == "Thumbs.db"
+            || segment == "desktop.ini"
+            || segment == ".turbo"
+            || segment == ".next"
+            || segment == ".nuxt"
+            || segment == ".cache"
+            || segment == ".parcel-cache"
+            || segment == ".venv"
+            || segment == "venv"
+            || segment.ends_with(".pyc")
+            || segment.ends_with(".pyo")
+        {
+            return true;
+        }
+    }
+
+    // 2. Discover gitignore status if inside a Git repository
+    if let Some((repo, workdir)) = repo_and_workdir {
+        let abs_path = workdir.join(&normalized);
+        if let Ok(rel_to_workdir) = abs_path.strip_prefix(workdir) {
+            if let Ok(ignored) = repo.status_should_ignore(rel_to_workdir) {
+                if ignored {
+                    return true;
+                }
+            }
+        }
+    }
+
+    // 3. Match against local .gitignore patterns
+    let mut ignored = false;
+    for rule in custom_rules {
+        if rule.dir_only && !is_dir {
+            continue;
+        }
+        if rule.regex.is_match(&normalized) {
+            ignored = !rule.negated;
+        }
+    }
+
+    ignored
+}
+
 #[tauri::command]
 pub async fn list_skill_files(
     skill_id: String,
@@ -3205,13 +3341,37 @@ pub async fn list_skill_files(
             return Err(AppError::not_found("Skill directory does not exist"));
         }
 
+        let gitignore_file = base_dir.join(".gitignore");
+        let custom_rules = if gitignore_file.is_file() {
+            std::fs::read_to_string(&gitignore_file)
+                .map(|content| parse_skill_gitignore(&content))
+                .unwrap_or_default()
+        } else {
+            Vec::new()
+        };
+
+        let repo = git2::Repository::discover(&base_dir).ok();
+        let repo_workdir = repo.as_ref().and_then(|r| r.workdir().map(|p| p.to_path_buf()));
+        let repo_pair = match (&repo, &repo_workdir) {
+            (Some(r), Some(w)) => Some((r, w.as_path())),
+            _ => None,
+        };
+
         let mut files = Vec::new();
         for entry in walkdir::WalkDir::new(&base_dir)
             .min_depth(1)
             .into_iter()
             .filter_entry(|e| {
-                let name = e.file_name().to_string_lossy();
-                !name.starts_with(".git")
+                let path = e.path();
+                let rel = match path.strip_prefix(&base_dir) {
+                    Ok(r) => r.to_string_lossy().replace('\\', "/"),
+                    Err(_) => return false,
+                };
+                if rel.is_empty() {
+                    return true;
+                }
+                let is_dir = e.file_type().is_dir();
+                !is_skill_path_ignored(&rel, is_dir, repo_pair, &custom_rules)
             })
         {
             let entry = entry.map_err(AppError::io)?;
