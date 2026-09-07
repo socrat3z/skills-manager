@@ -1,3 +1,5 @@
+import typography from '@tailwindcss/typography';
+
 /** @type {import('tailwindcss').Config} */
 export default {
   content: [
@@ -16,6 +18,9 @@ export default {
         border: 'var(--color-border)',
         'border-subtle': 'var(--color-border-subtle)',
         'border-faint': 'var(--color-border-faint)',
+        'theme-surface': 'var(--color-surface)',
+        'theme-border': 'var(--color-border)',
+        'theme-hover': 'var(--color-surface-hover)',
         accent: {
           DEFAULT: 'var(--color-accent)',
           light: 'var(--color-accent-light)',
@@ -38,6 +43,9 @@ export default {
         tertiary: 'var(--color-text-tertiary)',
         muted: 'var(--color-text-muted)',
         faint: 'var(--color-text-faint)',
+        'theme-text-primary': 'var(--color-text-primary)',
+        'theme-text-secondary': 'var(--color-text-secondary)',
+        'theme-text-muted': 'var(--color-text-muted)',
       },
       fontFamily: {
         sans: [
@@ -63,5 +71,5 @@ export default {
       },
     },
   },
-  plugins: [],
+  plugins: [typography],
 }
