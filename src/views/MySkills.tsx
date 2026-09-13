@@ -1118,8 +1118,8 @@ export function MySkills() {
       </div>
 
       <div className="app-toolbar">
-        <div className="flex flex-1 gap-3">
-          <div className="relative w-full max-w-[280px]">
+        <div className="flex flex-1 items-center gap-3">
+          <div className="relative w-full min-w-[200px] max-w-[280px]">
             <Search className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted" />
             <input
               type="text"
@@ -1133,7 +1133,7 @@ export function MySkills() {
             />
           </div>
 
-          <div className="app-segmented app-toolbar-segmented">
+          <div className="app-segmented app-toolbar-segmented shrink-0">
             {(["all", "enabled", "available"] as const).map((mode) => (
               <button
                 key={mode}
@@ -1150,73 +1150,80 @@ export function MySkills() {
 
         </div>
 
-        <div className="app-segmented app-toolbar-segmented">
-          {(() => {
-            const mode = getGitToolbarMode();
-            const meta = getGitStatusMeta(mode);
-            const Icon = meta.icon;
-            return (
-              <button
-                type="button"
-                onClick={() => navigate("/backup")}
-                className={cn(
-                  "inline-flex items-center gap-1 rounded-md px-3 py-2 text-[13px] font-medium transition-colors hover:bg-surface-hover hover:text-secondary",
-                  meta.className
-                )}
-                title={t("sidebar.backup")}
-              >
-                <Icon className={cn("h-3.5 w-3.5", meta.iconClassName)} />
-                {meta.label}
-              </button>
-            );
-          })()}
-          <button
-            onClick={handleCheckAllUpdates}
-            disabled={checkingAll}
-            className="ml-2 mr-2 inline-flex items-center gap-1 rounded-md border-l border-border-subtle pl-4 pr-3 py-2 text-[13px] font-medium text-muted transition-colors hover:bg-surface-hover hover:text-secondary disabled:opacity-50"
-          >
-            <RefreshCw className={cn("h-3.5 w-3.5", checkingAll && "animate-spin")} />
-            {t("mySkills.updateActions.checkAll")}
-          </button>
-          <button
-            onClick={handleUpdateAvailableSkills}
-            disabled={batchUpdating || availableUpdateCount === 0}
-            className="mr-2 inline-flex items-center gap-1 rounded-md px-3 py-2 text-[13px] font-medium text-accent-light transition-colors hover:bg-accent-bg disabled:opacity-50"
-          >
-            <RotateCcw className={cn("h-3.5 w-3.5", batchUpdating && "animate-spin")} />
-            {t("mySkills.updateActions.updateAvailable", { count: availableUpdateCount })}
-          </button>
-          <button
-            onClick={() => setViewMode("grid")}
-            className={cn(
-              "rounded-md p-2 transition-colors outline-none",
-              viewMode === "grid" ? "bg-surface-active text-secondary" : "text-muted hover:text-tertiary"
-            )}
-          >
-            <LayoutGrid className="h-4 w-4" />
-          </button>
-          <button
-            onClick={() => setViewMode("list")}
-            className={cn(
-              "rounded-md p-2 transition-colors outline-none",
-              viewMode === "list" ? "bg-surface-active text-secondary" : "text-muted hover:text-tertiary"
-            )}
-          >
-            <List className="h-4 w-4" />
-          </button>
-        </div>
+        {/* Keep all library actions in one toolbar so they wrap together. */}
+        <div className="flex items-center gap-3">
+          <div className="app-segmented app-toolbar-segmented shrink-0">
+            {(() => {
+              const mode = getGitToolbarMode();
+              const meta = getGitStatusMeta(mode);
+              const Icon = meta.icon;
+              return (
+                <button
+                  type="button"
+                  onClick={() => navigate("/backup")}
+                  className={cn(
+                    "inline-flex items-center gap-1 rounded-md px-3 py-2 text-[13px] font-medium transition-colors hover:bg-surface-hover hover:text-secondary",
+                    meta.className
+                  )}
+                  title={t("sidebar.backup")}
+                >
+                  <Icon className={cn("h-3.5 w-3.5", meta.iconClassName)} />
+                  {meta.label}
+                </button>
+              );
+            })()}
+            <button
+              onClick={handleCheckAllUpdates}
+              disabled={checkingAll}
+              className="ml-2 mr-2 inline-flex items-center gap-1 rounded-md border-l border-border-subtle pl-4 pr-3 py-2 text-[13px] font-medium text-muted transition-colors hover:bg-surface-hover hover:text-secondary disabled:opacity-50"
+            >
+              <RefreshCw className={cn("h-3.5 w-3.5", checkingAll && "animate-spin")} />
+              {t("mySkills.updateActions.checkAll")}
+            </button>
+            <button
+              onClick={handleUpdateAvailableSkills}
+              disabled={batchUpdating || availableUpdateCount === 0}
+              className="mr-2 inline-flex items-center gap-1 rounded-md px-3 py-2 text-[13px] font-medium text-accent-light transition-colors hover:bg-accent-bg disabled:opacity-50"
+            >
+              <RotateCcw className={cn("h-3.5 w-3.5", batchUpdating && "animate-spin")} />
+              {t("mySkills.updateActions.updateAvailable", { count: availableUpdateCount })}
+            </button>
+            <span aria-hidden="true" className="mx-1 h-5 w-px shrink-0 self-center bg-border-subtle" />
+            <button
+              onClick={() => setViewMode("grid")}
+              className={cn(
+                "rounded-md p-2 transition-colors outline-none",
+                viewMode === "grid" ? "bg-surface-active text-secondary" : "text-muted hover:text-tertiary"
+              )}
+            >
+              <LayoutGrid className="h-4 w-4" />
+            </button>
+            <button
+              onClick={() => setViewMode("list")}
+              className={cn(
+                "rounded-md p-2 transition-colors outline-none",
+                viewMode === "list" ? "bg-surface-active text-secondary" : "text-muted hover:text-tertiary"
+              )}
+            >
+              <List className="h-4 w-4" />
+            </button>
 
-        {/* Selection is a mode, not a third view — keep it out of the view switcher. */}
-        <button
-          onClick={() => isMultiSelect ? exitMultiSelect() : setIsMultiSelect(true)}
-          className={cn(
-            "app-toolbar-button app-toolbar-button-secondary",
-            isMultiSelect && "border-border bg-surface-active text-secondary hover:bg-surface-active"
-          )}
-        >
-          <SquareCheck className="h-4 w-4" />
-          {isMultiSelect ? t("mySkills.cancelSelect") : t("mySkills.selectMode")}
-        </button>
+            {/* Selection can stay active in either view. */}
+            <span aria-hidden="true" className="mx-1 h-5 w-px shrink-0 self-center bg-border-subtle" />
+            <button
+              type="button"
+              aria-pressed={isMultiSelect}
+              onClick={() => isMultiSelect ? exitMultiSelect() : setIsMultiSelect(true)}
+              className={cn(
+                "app-segmented-button inline-flex items-center gap-1.5 hover:bg-surface-hover focus-visible:ring-2 focus-visible:ring-border",
+                isMultiSelect && "app-segmented-button-active hover:bg-surface-active hover:text-secondary"
+              )}
+            >
+              <SquareCheck className="h-4 w-4" />
+              {isMultiSelect ? t("mySkills.cancelSelect") : t("mySkills.selectMode")}
+            </button>
+          </div>
+        </div>
       </div>
 
       <div className="flex flex-wrap items-center gap-1 px-1 -mt-2 -mb-3">

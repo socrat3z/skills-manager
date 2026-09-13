@@ -5,6 +5,37 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.38.0] - 2026-09-08
+
+### Release Overview
+- Installing one skill out of a large repository now downloads that skill, not the repository.
+
+### User-facing
+- Installing or updating a skill whose source names one skill directory now fetches only that directory, using a partial clone and a sparse checkout. Installing `mcp-builder` out of `anthropics/skills` went from 15 MB to 472 KB of cache on disk. Skills from the same repository share one cache, so the second one costs only its own files. Anything that can go wrong here — a server that refuses partial clones, a git too old to read the arguments the way we mean them, a subdirectory upstream has since moved, a source that names a folder of skills rather than one skill — falls back to the full checkout, so this can only make an install faster, never make it fail.
+- A configured proxy no longer defeats the repository cache. The cache refresh passed the proxy setting to `git fetch` in a position git rejects outright, so for proxy users the refresh failed every time and every install and update re-cloned the whole repository from scratch. A proxy changed after a repository was first cached is now picked up too.
+- Cancelling an install no longer throws away a healthy repository cache, which used to make the next install download everything again.
+- The repository cache is now bounded. Nothing ever deleted an entry before, so it grew by one checkout per repository forever — 569 MB across 48 repositories on an ordinary machine, the oldest untouched for four months. Above 1 GB the least recently used repositories are dropped; they are re-downloaded only if that skill is installed or updated again. A repository another install is working on is skipped, never deleted underneath it.
+
+### Developer & Governance
+- `clone_repo_ref_scoped` is the single clone entry point; the narrow path is taken only when the caller names one skill directory. Preview with no subpath, skills.sh locator installs, `resolve_skill_dir`'s repo-wide fallback and any container subpath all still get a whole tree from a separate cache slot, so the flows that search a repository are untouched.
+- The narrow guard requires the subpath to be a skill, not merely to contain one. A container would otherwise pass while leaving `resolve_skill_dir`'s locator search on a one-directory tree, where it does not fail cleanly — it can resolve a different skill that happens to be in scope.
+- A narrow checkout is materialized by copying the cache, not by `git clone --local`: cloning from a partial clone makes the source serve objects it does not have and aborts with "could not fetch <oid> from promisor remote".
+- `sparse-checkout set` succeeds on a path the repository does not have, simply leaving it absent, so the result is inspected for an actual skill before it is used. Subpaths are never tidied up before being handed to git: on unix a trailing space or a backslash is a legal part of a directory name, so rewriting one would narrow to a neighbour and pass the guard while the caller read a path the checkout lacks.
+- The cache-side `sparse-checkout`, `checkout` and `reset --hard` all fetch blobs over the network in a partial clone, so they carry the clone's timeout, cancel flag and current proxy.
+- An install checkout is detached from its promisor remote before it leaves this module, so it is not a partial clone. This is what keeps the narrow clone from taxing every future change: callers run plain `git` against the checkout, and without the detach any command reaching an unfetched object would silently become a network round trip that can hang. Detached, a missing object is an immediate error — exactly as in the shallow full checkout that came before. The precise claim is that nothing fetches behind a caller's back; an explicit `fetch` or `pull` against origin would still use the network, and no caller does that. Three settings can register a promisor remote, so all three are cleared, and one of the tests asserts the outcome over a real `file://` partial clone rather than the names of the settings.
+
+## [1.37.1] - 2026-09-07
+
+### Release Overview
+- Toolbar fixes in the library, the global and lobster workspaces, and project pages: multi-select moves into the main toolbar, and the library toolbar stops breaking its own labels apart at narrow widths.
+
+### User-facing
+- The library toolbar no longer wraps its filter labels mid-word. Below roughly 1100px of toolbar width the segmented buttons collapsed to one character per line and the search field was squeezed from 280px down to 65px. Entering select mode made it visible rather than causing it: the longer "Cancel selection" label pushed an already borderline row over the edge. Segmented labels now stay on one line on every page, and the number of toolbar rows no longer changes when you toggle select mode.
+- Multi-select now shares the right-hand toolbar border with the backup, update, refresh and view controls, the same way in the library, the global and lobster workspaces, and project pages. A divider separates the view controls from selection mode, while the labelled selection button keeps its independent active state.
+
+### Developer & Governance
+- `.app-segmented-button` carries `whitespace-nowrap`, so a segmented label can no longer break on any page. `ProjectDetail` and `WorkspaceView` already pinned their segmented controls with `shrink-0`; `MySkills` was the only view missing it.
+
 ## [1.37.0] - 2026-09-06
 
 ### Release Overview
