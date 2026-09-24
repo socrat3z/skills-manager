@@ -35,4 +35,5 @@ pub mod tool_adapters;
 pub mod tool_service;
 pub mod mcp_service;
 pub mod glama_api;
+pub mod tool_adapters_overlay;
 

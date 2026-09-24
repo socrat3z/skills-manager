@@ -9,4 +9,5 @@ pub mod skills;
 pub mod sync;
 pub mod tools;
 pub mod mcp;
+pub mod skill_studio;
 

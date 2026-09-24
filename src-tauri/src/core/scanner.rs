@@ -365,7 +365,6 @@ mod tests {
             recursive_scan: false,
             project_relative_skills_dir: None,
             category: Default::default(),
-            ..Default::default()
         };
 
         let plan = scan_local_skills_with_adapters(&[], &[adapter]).unwrap();
@@ -395,7 +394,6 @@ mod tests {
             recursive_scan: false,
             project_relative_skills_dir: None,
             category: Default::default(),
-            ..Default::default()
         };
 
         let adapter_with_extra = tool_adapters::ToolAdapter {

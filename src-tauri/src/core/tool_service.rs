@@ -6,6 +6,7 @@ use super::{
     skill_store::SkillStore,
     tool_adapters::{self, CustomToolDef, ToolCategory},
 };
+use super::tool_adapters_overlay::ToolAdapterMcpExt;
 
 #[derive(Debug, Clone, Serialize)]
 pub struct ToolInfo {
@@ -532,7 +533,6 @@ mod tests {
                     skills_dir: legacy_skills.to_string_lossy().into_owned(),
                     project_relative_skills_dir: Some(".legacy/skills".to_string()),
                     category: ToolCategory::Lobster,
-                    ..Default::default()
                 },
                 CustomToolDef {
                     key: "custom_agent".to_string(),
@@ -540,7 +540,6 @@ mod tests {
                     skills_dir: tmp.path().join("custom-skills").to_string_lossy().into_owned(),
                     project_relative_skills_dir: Some(".custom/skills".to_string()),
                     category: ToolCategory::Lobster,
-                    ..Default::default()
                 },
             ],
         )
@@ -566,7 +565,6 @@ mod tests {
                 skills_dir: legacy_skills.to_string_lossy().into_owned(),
                 project_relative_skills_dir: Some(".legacy/skills".to_string()),
                 category: ToolCategory::Lobster,
-                ..Default::default()
             }],
         )
         .unwrap();

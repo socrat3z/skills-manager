@@ -412,7 +412,6 @@ pub async fn add_custom_tool(
             skills_dir,
             project_relative_skills_dir,
             category: Default::default(),
-            ..Default::default()
         });
         set_custom_tools(&store, &customs)?;
         reconcile_tool_sync_after_path_change(&store, &key);
@@ -475,7 +474,6 @@ mod tests {
             skills_dir: "/tmp/whatever-they-had".to_string(),
             project_relative_skills_dir: Some(".old/skills".to_string()),
             category: ToolCategory::Coding,
-            ..Default::default()
         }];
         store
             .set_setting("custom_tools", &serde_json::to_string(&customs).unwrap())
@@ -591,7 +589,6 @@ mod tests {
             skills_dir: target_base.to_string_lossy().to_string(),
             project_relative_skills_dir: None,
             category: Default::default(),
-            ..Default::default()
         }];
         store
             .set_setting(

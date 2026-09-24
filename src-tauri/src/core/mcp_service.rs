@@ -4,6 +4,7 @@ use serde_json::{json, Value};
 use std::collections::HashMap;
 use std::fs;
 use std::path::{Path, PathBuf};
+use crate::core::tool_adapters_overlay::ToolAdapterMcpExt;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "lowercase")]
@@ -164,11 +165,26 @@ pub struct HarnessAdapterDef {
 impl HarnessAdapterDef {
     pub fn all() -> Vec<HarnessAdapterDef> {
         let db_path = crate::core::central_repo::db_path();
-        let adapters = if let Ok(store) = crate::core::skill_store::SkillStore::new(&db_path) {
+        let mut adapters = if let Ok(store) = crate::core::skill_store::SkillStore::new(&db_path) {
             crate::core::tool_adapters::all_tool_adapters(&store)
         } else {
             crate::core::tool_adapters::default_tool_adapters()
         };
+
+        if !adapters.iter().any(|a| a.key == "zed") {
+            adapters.push(crate::core::tool_adapters::ToolAdapter {
+                key: "zed".into(),
+                display_name: "Zed".into(),
+                relative_skills_dir: ".config/zed/skills".into(),
+                relative_detect_dir: ".config/zed".into(),
+                additional_scan_dirs: vec![],
+                override_skills_dir: None,
+                is_custom: false,
+                recursive_scan: false,
+                project_relative_skills_dir: None,
+                category: crate::core::tool_adapters::ToolCategory::Coding,
+            });
+        }
 
         adapters
             .into_iter()
