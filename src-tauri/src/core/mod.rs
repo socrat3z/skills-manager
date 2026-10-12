@@ -6,6 +6,7 @@ pub mod cli_bridge;
 pub mod content_hash;
 pub mod crypto;
 pub mod error;
+pub mod file_manager;
 pub mod file_watcher;
 pub mod git2_engine;
 pub mod git_backup;
@@ -36,4 +37,5 @@ pub mod tool_service;
 pub mod mcp_service;
 pub mod glama_api;
 pub mod tool_adapters_overlay;
+pub mod well_known;
 
