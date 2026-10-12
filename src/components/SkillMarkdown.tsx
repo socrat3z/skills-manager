@@ -34,8 +34,8 @@ function extractTextFromChildren(children: React.ReactNode): string {
   React.Children.forEach(children, (child) => {
     if (typeof child === "string" || typeof child === "number") {
       text += String(child);
-    } else if (React.isValidElement(child) && (child.props as any)?.children) {
-      text += extractTextFromChildren((child.props as any).children);
+    } else if (React.isValidElement(child) && (child.props as { children?: React.ReactNode })?.children) {
+      text += extractTextFromChildren((child.props as { children?: React.ReactNode }).children);
     }
   });
   return text;
@@ -49,11 +49,12 @@ function cleanAlertText(children: React.ReactNode, tag: string): React.ReactNode
     if (typeof child === "string") {
       return child.replace(tag, "").trim();
     }
-    if (React.isValidElement(child) && (child.props as any)?.children) {
-      return React.cloneElement(child, {
-        ...(child.props as any),
-        children: cleanAlertText((child.props as any).children, tag),
-      });
+    if (React.isValidElement<{ children?: React.ReactNode }>(child) && child.props.children) {
+      return React.cloneElement(
+        child,
+        undefined,
+        cleanAlertText(child.props.children, tag)
+      );
     }
     return child;
   });
@@ -71,12 +72,12 @@ function CodeBlockContainer({ children }: { children: React.ReactNode }) {
 
   React.Children.forEach(children, (child) => {
     if (React.isValidElement(child)) {
-      const className = String((child.props as any)?.className || "");
+      const className = String((child.props as { className?: string })?.className || "");
       const match = /language-(\w+)/.exec(className);
       if (match) {
         language = match[1];
       }
-      rawText = extractTextFromChildren((child.props as any)?.children);
+      rawText = extractTextFromChildren((child.props as { children?: React.ReactNode })?.children);
     }
   });
 
@@ -130,6 +131,57 @@ function CodeBlockContainer({ children }: { children: React.ReactNode }) {
         </pre>
       </div>
     </div>
+  );
+}
+
+function CodeRenderer({ className, children, ...props }: React.ComponentPropsWithoutRef<"code">) {
+  const isInsidePre = useContext(PreContext);
+
+  if (isInsidePre) {
+    return (
+      <code
+        className={cn(
+          "block font-mono text-[12.5px] leading-relaxed text-secondary select-text whitespace-pre",
+          className
+        )}
+        {...props}
+      >
+        {children}
+      </code>
+    );
+  }
+
+  const textStr = String(children);
+
+  if (
+    textStr.startsWith("!") ||
+    textStr.includes("${CLAUDE_") ||
+    textStr.includes("$ARGUMENTS") ||
+    /^\$[1-9]/.test(textStr)
+  ) {
+    return (
+      <code
+        className={cn(
+          "rounded-md bg-purple-500/15 border border-purple-500/25 px-1.5 py-0.5 font-mono text-[12px] text-purple-700 dark:text-purple-300 inline-block font-medium align-baseline",
+          className
+        )}
+        {...props}
+      >
+        {children}
+      </code>
+    );
+  }
+
+  return (
+    <code
+      className={cn(
+        "rounded-md bg-bg-secondary border border-border/80 px-1.5 py-0.5 font-mono text-[12px] text-accent font-medium inline-block align-baseline",
+        className
+      )}
+      {...props}
+    >
+      {children}
+    </code>
   );
 }
 
@@ -528,59 +580,7 @@ export function SkillMarkdown({
               <CodeBlockContainer>{children}</CodeBlockContainer>
             </PreContext.Provider>
           ),
-          code: ({ className, children, ...props }) => {
-            const isInsidePre = useContext(PreContext);
-
-            // If inside a <pre> tag, render standard unstyled code child
-            if (isInsidePre) {
-              return (
-                <code
-                  className={cn(
-                    "block font-mono text-[12.5px] leading-relaxed text-secondary select-text whitespace-pre",
-                    className
-                  )}
-                  {...props}
-                >
-                  {children}
-                </code>
-              );
-            }
-
-            const textStr = String(children);
-
-            // Highlight Dynamic Context Injection expressions: !`cmd` or ${CLAUDE_...} or $ARGUMENTS
-            if (
-              textStr.startsWith("!") ||
-              textStr.includes("${CLAUDE_") ||
-              textStr.includes("$ARGUMENTS") ||
-              /^\$[1-9]/.test(textStr)
-            ) {
-              return (
-                <code
-                  className={cn(
-                    "rounded-md bg-purple-500/15 border border-purple-500/25 px-1.5 py-0.5 font-mono text-[12px] text-purple-700 dark:text-purple-300 inline-block font-medium align-baseline",
-                    className
-                  )}
-                  {...props}
-                >
-                  {children}
-                </code>
-              );
-            }
-
-            // Standard inline code
-            return (
-              <code
-                className={cn(
-                  "rounded-md bg-bg-secondary border border-border/80 px-1.5 py-0.5 font-mono text-[12px] text-accent font-medium inline-block align-baseline",
-                  className
-                )}
-                {...props}
-              >
-                {children}
-              </code>
-            );
-          },
+          code: CodeRenderer,
           table: ({ className, ...props }) => (
             <div className="my-6 overflow-x-auto rounded-xl border border-border shadow-xs">
               <table

@@ -189,7 +189,7 @@ function TreeNodeRow({
           type="button"
           onClick={() => onToggle(node.path)}
           style={{ paddingLeft: `${8 + indent}px` }}
-          className="w-full flex items-center gap-1.5 py-1 pr-2 rounded text-xs text-left transition-colors text-theme-text-secondary hover:bg-theme-hover hover:text-theme-text-primary group"
+          className="w-full flex items-center gap-1.5 py-1 pr-2 rounded text-xs text-left transition-colors text-secondary hover:bg-surface-hover hover:text-primary group"
           title={node.path}
         >
           <span className="shrink-0 text-muted">
@@ -235,7 +235,7 @@ function TreeNodeRow({
         "group flex items-center justify-between pr-1.5 py-1 rounded text-xs cursor-pointer transition-colors",
         isSelected
           ? "bg-accent/15 text-accent font-medium"
-          : "text-theme-text-secondary hover:bg-theme-hover hover:text-theme-text-primary"
+          : "text-secondary hover:bg-surface-hover hover:text-primary"
       )}
       onClick={() => onSelectFile(node.path)}
       title={node.path}
@@ -253,7 +253,7 @@ function TreeNodeRow({
               onDeleteFile(node.path);
             }
           }}
-          className="opacity-0 group-hover:opacity-100 p-0.5 text-theme-text-muted hover:text-red-400 transition shrink-0"
+          className="opacity-0 group-hover:opacity-100 p-0.5 text-muted hover:text-red-400 transition shrink-0"
           title="Delete File"
         >
           <Trash2 className="w-3 h-3" />
@@ -320,17 +320,17 @@ export function SkillFileExplorer({
   const allExpanded = allDirPaths.size > 0 && expanded.size >= allDirPaths.size;
 
   return (
-    <div className="w-64 border-r border-theme-border flex flex-col h-full bg-theme-surface/50 select-none">
+    <div className="w-64 border-r border-border flex flex-col h-full bg-surface/50 select-none">
       {/* Header */}
-      <div className="px-3 py-2.5 border-b border-theme-border flex items-center justify-between gap-1.5 shrink-0">
-        <span className="text-[11px] font-semibold uppercase tracking-wider text-theme-text-muted">
+      <div className="px-3 py-2.5 border-b border-border flex items-center justify-between gap-1.5 shrink-0">
+        <span className="text-[11px] font-semibold uppercase tracking-wider text-muted">
           Skill Files
         </span>
         <div className="flex items-center gap-0.5 ml-auto">
           {allDirPaths.size > 0 && (
             <button
               onClick={allExpanded ? collapseAll : expandAll}
-              className="p-1 hover:bg-theme-hover rounded text-theme-text-secondary hover:text-theme-text-primary transition"
+              className="p-1 hover:bg-surface-hover rounded text-secondary hover:text-primary transition"
               title={allExpanded ? "Collapse All" : "Expand All"}
             >
               {allExpanded ? (
@@ -342,7 +342,7 @@ export function SkillFileExplorer({
           )}
           <button
             onClick={() => setIsCreating(true)}
-            className="p-1 hover:bg-theme-hover rounded text-theme-text-secondary hover:text-theme-text-primary transition"
+            className="p-1 hover:bg-surface-hover rounded text-secondary hover:text-primary transition"
             title="Create New File"
           >
             <Plus className="w-3.5 h-3.5" />
@@ -350,7 +350,7 @@ export function SkillFileExplorer({
           <button
             onClick={onRefresh}
             disabled={loading}
-            className="p-1 hover:bg-theme-hover rounded text-theme-text-secondary hover:text-theme-text-primary transition disabled:opacity-40"
+            className="p-1 hover:bg-surface-hover rounded text-secondary hover:text-primary transition disabled:opacity-40"
             title="Refresh Files"
           >
             <RefreshCw className={cn("w-3.5 h-3.5", loading && "animate-spin")} />
@@ -362,7 +362,7 @@ export function SkillFileExplorer({
       {isCreating && (
         <form
           onSubmit={handleCreateSubmit}
-          className="p-2 border-b border-theme-border bg-theme-hover/30 shrink-0"
+          className="p-2 border-b border-border bg-surface-hover/30 shrink-0"
         >
           <input
             type="text"
@@ -370,13 +370,13 @@ export function SkillFileExplorer({
             value={newFileName}
             onChange={(e) => setNewFileName(e.target.value)}
             autoFocus
-            className="w-full text-xs px-2 py-1 bg-theme-surface border border-theme-border rounded focus:outline-none focus:ring-1 focus:ring-accent text-theme-text-primary placeholder:text-theme-text-muted"
+            className="w-full text-xs px-2 py-1 bg-surface border border-border rounded focus:outline-none focus:ring-1 focus:ring-accent text-primary placeholder:text-muted"
           />
           <div className="flex justify-end gap-1 mt-1.5">
             <button
               type="button"
               onClick={() => setIsCreating(false)}
-              className="text-[11px] px-2 py-0.5 text-theme-text-muted hover:text-theme-text-primary"
+              className="text-[11px] px-2 py-0.5 text-muted hover:text-primary"
             >
               Cancel
             </button>
@@ -393,7 +393,7 @@ export function SkillFileExplorer({
       {/* Tree */}
       <div className="flex-1 overflow-y-auto p-1.5">
         {tree.length === 0 ? (
-          <div className="text-xs text-theme-text-muted text-center py-6">
+          <div className="text-xs text-muted text-center py-6">
             {loading ? "Loading\u2026" : "No files found"}
           </div>
         ) : (

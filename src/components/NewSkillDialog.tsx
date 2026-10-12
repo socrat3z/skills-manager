@@ -45,15 +45,15 @@ export function NewSkillDialog({ isOpen, onClose, onCreated }: NewSkillDialogPro
 
   return (
     <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
-      <div className="bg-theme-surface border border-theme-border rounded-xl shadow-2xl max-w-md w-full overflow-hidden flex flex-col">
-        <div className="p-4 border-b border-theme-border flex items-center justify-between bg-theme-surface/70">
-          <div className="flex items-center gap-2 font-semibold text-theme-text-primary">
+      <div className="bg-surface border border-border rounded-xl shadow-2xl max-w-md w-full overflow-hidden flex flex-col">
+        <div className="p-4 border-b border-border flex items-center justify-between bg-surface/70">
+          <div className="flex items-center gap-2 font-semibold text-primary">
             <Sparkles className="w-5 h-5 text-amber-400" />
             <span>Create Custom Skill</span>
           </div>
           <button
             onClick={onClose}
-            className="p-1 text-theme-text-muted hover:text-theme-text-primary rounded"
+            className="p-1 text-muted hover:text-primary rounded"
           >
             <X className="w-5 h-5" />
           </button>
@@ -67,7 +67,7 @@ export function NewSkillDialog({ isOpen, onClose, onCreated }: NewSkillDialogPro
           )}
 
           <div className="space-y-1.5">
-            <label className="text-xs font-semibold text-theme-text-primary">Skill Name *</label>
+            <label className="text-xs font-semibold text-primary">Skill Name *</label>
             <input
               type="text"
               placeholder="e.g. data-processing-expert"
@@ -75,37 +75,37 @@ export function NewSkillDialog({ isOpen, onClose, onCreated }: NewSkillDialogPro
               onChange={(e) => setName(e.target.value)}
               required
               autoFocus
-              className="w-full text-xs px-3 py-2 bg-theme-surface border border-theme-border rounded focus:outline-none focus:ring-1 focus:ring-accent text-theme-text-primary placeholder:text-theme-text-muted"
+              className="w-full text-xs px-3 py-2 bg-surface border border-border rounded focus:outline-none focus:ring-1 focus:ring-accent text-primary placeholder:text-muted"
             />
           </div>
 
           <div className="space-y-1.5">
-            <label className="text-xs font-semibold text-theme-text-primary">Description</label>
+            <label className="text-xs font-semibold text-primary">Description</label>
             <textarea
               placeholder="Describe when agent should use this skill..."
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               rows={3}
-              className="w-full text-xs p-3 bg-theme-surface border border-theme-border rounded focus:outline-none focus:ring-1 focus:ring-accent text-theme-text-primary placeholder:text-theme-text-muted resize-none"
+              className="w-full text-xs p-3 bg-surface border border-border rounded focus:outline-none focus:ring-1 focus:ring-accent text-primary placeholder:text-muted resize-none"
             />
           </div>
 
           <div className="space-y-1.5">
-            <label className="text-xs font-semibold text-theme-text-primary">Tags (comma separated)</label>
+            <label className="text-xs font-semibold text-primary">Tags (comma separated)</label>
             <input
               type="text"
               placeholder="e.g. python, automation, database"
               value={tagsInput}
               onChange={(e) => setTagsInput(e.target.value)}
-              className="w-full text-xs px-3 py-2 bg-theme-surface border border-theme-border rounded focus:outline-none focus:ring-1 focus:ring-accent text-theme-text-primary placeholder:text-theme-text-muted"
+              className="w-full text-xs px-3 py-2 bg-surface border border-border rounded focus:outline-none focus:ring-1 focus:ring-accent text-primary placeholder:text-muted"
             />
           </div>
 
-          <div className="flex justify-end gap-2 pt-2 border-t border-theme-border">
+          <div className="flex justify-end gap-2 pt-2 border-t border-border">
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 text-xs text-theme-text-secondary hover:text-theme-text-primary"
+              className="px-4 py-2 text-xs text-secondary hover:text-primary"
             >
               Cancel
             </button>

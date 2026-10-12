@@ -37,7 +37,3 @@ run = "npm run build"
 [tasks.dev]
 description = "Start Tauri app in development mode"
 run = "powershell -ExecutionPolicy Bypass -File scripts/dev-win.ps1"
-
-
-
-

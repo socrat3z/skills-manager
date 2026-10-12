@@ -270,21 +270,21 @@ export function SkillStudio() {
   };
 
   return (
-    <div className="flex flex-col h-screen bg-theme-surface text-theme-text-primary overflow-hidden">
+    <div className="flex flex-col h-screen bg-surface text-primary overflow-hidden">
       {/* Top Header Navigation */}
-      <header className="h-14 border-b border-theme-border px-4 flex items-center justify-between bg-theme-surface shrink-0">
+      <header className="h-14 border-b border-border px-4 flex items-center justify-between bg-surface shrink-0">
         <div className="flex items-center gap-3">
           <div className="p-2 bg-accent/10 text-accent rounded-lg">
             <Code className="w-5 h-5" />
           </div>
           <div>
-            <h1 className="text-sm font-bold text-theme-text-primary flex items-center gap-2">
+            <h1 className="text-sm font-bold text-primary flex items-center gap-2">
               Skill Studio
               <span className="text-[10px] font-normal px-2 py-0.5 bg-accent/10 text-accent rounded-full border border-accent/20">
                 IDE & Safe Editor
               </span>
             </h1>
-            <p className="text-xs text-theme-text-muted">Edit, validate rules, AI transform & commit skill files</p>
+            <p className="text-xs text-muted">Edit, validate rules, AI transform & commit skill files</p>
           </div>
         </div>
 
@@ -716,7 +716,7 @@ export function SkillStudio() {
 
         {/* Center Code Editor */}
         {loadingContent ? (
-          <div className="flex-1 flex items-center justify-center text-theme-text-muted text-xs gap-2">
+          <div className="flex-1 flex items-center justify-center text-muted text-xs gap-2">
             <Loader2 className="w-5 h-5 animate-spin text-accent" /> Loading file content...
           </div>
         ) : (

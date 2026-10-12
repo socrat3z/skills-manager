@@ -48,9 +48,9 @@ export function SkillAiAssistant({
   };
 
   return (
-    <div className="w-80 border-l border-theme-border flex flex-col h-full bg-theme-surface/50">
-      <div className="p-3 border-b border-theme-border flex items-center justify-between">
-        <div className="flex items-center gap-2 text-xs font-semibold text-theme-text-primary">
+    <div className="w-80 border-l border-border flex flex-col h-full bg-surface/50">
+      <div className="p-3 border-b border-border flex items-center justify-between">
+        <div className="flex items-center gap-2 text-xs font-semibold text-primary">
           <Sparkles className="w-4 h-4 text-amber-400" />
           <span>AI Skill Assistant</span>
         </div>
@@ -59,7 +59,7 @@ export function SkillAiAssistant({
       <div className="p-3 flex-1 flex flex-col gap-3 overflow-y-auto">
         {/* Preset Prompt Cards */}
         <div className="space-y-1.5">
-          <label className="text-[11px] font-semibold text-theme-text-muted uppercase tracking-wider">
+          <label className="text-[11px] font-semibold text-muted uppercase tracking-wider">
             Quick Actions
           </label>
           <div className="grid grid-cols-1 gap-1.5">
@@ -69,12 +69,12 @@ export function SkillAiAssistant({
                 handleGenerate("refine_file", "Refine instructions to be clear, unambiguous, and structured");
               }}
               disabled={loading}
-              className="text-left text-xs p-2 bg-theme-surface hover:bg-theme-hover border border-theme-border rounded transition flex items-center justify-between group"
+              className="text-left text-xs p-2 bg-surface hover:bg-surface-hover border border-border rounded transition flex items-center justify-between group"
             >
-              <span className="text-theme-text-secondary group-hover:text-theme-text-primary">
+              <span className="text-secondary group-hover:text-primary">
                 ✨ Refine Instructions
               </span>
-              <ArrowRight className="w-3.5 h-3.5 text-theme-text-muted group-hover:text-accent" />
+              <ArrowRight className="w-3.5 h-3.5 text-muted group-hover:text-accent" />
             </button>
 
             <button
@@ -83,12 +83,12 @@ export function SkillAiAssistant({
                 handleGenerate("fix_safety", "Fix safety rules and frontmatter format");
               }}
               disabled={loading}
-              className="text-left text-xs p-2 bg-theme-surface hover:bg-theme-hover border border-theme-border rounded transition flex items-center justify-between group"
+              className="text-left text-xs p-2 bg-surface hover:bg-surface-hover border border-border rounded transition flex items-center justify-between group"
             >
-              <span className="text-theme-text-secondary group-hover:text-theme-text-primary">
+              <span className="text-secondary group-hover:text-primary">
                 🛡️ Generate Safe Frontmatter
               </span>
-              <ArrowRight className="w-3.5 h-3.5 text-theme-text-muted group-hover:text-accent" />
+              <ArrowRight className="w-3.5 h-3.5 text-muted group-hover:text-accent" />
             </button>
 
             <button
@@ -97,26 +97,26 @@ export function SkillAiAssistant({
                 handleGenerate("create_script", "Generate a Python script for file automation");
               }}
               disabled={loading}
-              className="text-left text-xs p-2 bg-theme-surface hover:bg-theme-hover border border-theme-border rounded transition flex items-center justify-between group"
+              className="text-left text-xs p-2 bg-surface hover:bg-surface-hover border border-border rounded transition flex items-center justify-between group"
             >
-              <span className="text-theme-text-secondary group-hover:text-theme-text-primary">
+              <span className="text-secondary group-hover:text-primary">
                 🐍 Generate Python Helper Script
               </span>
-              <ArrowRight className="w-3.5 h-3.5 text-theme-text-muted group-hover:text-accent" />
+              <ArrowRight className="w-3.5 h-3.5 text-muted group-hover:text-accent" />
             </button>
           </div>
         </div>
 
         {/* Custom Prompt Box */}
         <div className="space-y-1.5 flex-1 flex flex-col">
-          <label className="text-[11px] font-semibold text-theme-text-muted uppercase tracking-wider">
+          <label className="text-[11px] font-semibold text-muted uppercase tracking-wider">
             Custom AI Modification Prompt
           </label>
           <textarea
             value={prompt}
             onChange={(e) => setPrompt(e.target.value)}
             placeholder="Ask AI to modify code, add a section, optimize markdown, or generate scripts..."
-            className="w-full text-xs p-2.5 bg-theme-surface border border-theme-border rounded focus:outline-none focus:ring-1 focus:ring-accent text-theme-text-primary placeholder:text-theme-text-muted resize-none flex-1 min-h-[100px]"
+            className="w-full text-xs p-2.5 bg-surface border border-border rounded focus:outline-none focus:ring-1 focus:ring-accent text-primary placeholder:text-muted resize-none flex-1 min-h-[100px]"
           />
 
           <button
@@ -126,7 +126,7 @@ export function SkillAiAssistant({
               "w-full text-xs py-2 rounded font-medium transition flex items-center justify-center gap-2 shadow-sm",
               prompt.trim() && !loading
                 ? "bg-amber-500 text-white hover:bg-amber-600"
-                : "bg-theme-hover text-theme-text-muted cursor-not-allowed"
+                : "bg-surface-hover text-muted cursor-not-allowed"
             )}
           >
             {loading ? (
@@ -148,13 +148,13 @@ export function SkillAiAssistant({
               <span className="text-xs font-semibold text-amber-400">AI Response Preview</span>
               <button
                 onClick={() => setAiResult(null)}
-                className="text-[11px] text-theme-text-muted hover:text-theme-text-primary"
+                className="text-[11px] text-muted hover:text-primary"
               >
                 Dismiss
               </button>
             </div>
 
-            <pre className="text-[11px] font-mono bg-theme-surface p-2 rounded border border-theme-border overflow-x-auto max-h-48 text-theme-text-secondary whitespace-pre-wrap">
+            <pre className="text-[11px] font-mono bg-surface p-2 rounded border border-border overflow-x-auto max-h-48 text-secondary whitespace-pre-wrap">
               {aiResult}
             </pre>
 

@@ -262,8 +262,8 @@ export function SkillDirectivesModal({
               className={cn(
                 "text-xs px-2.5 py-1 rounded font-medium transition",
                 activeTab === "all"
-                  ? "bg-theme-hover text-theme-text-primary shadow-sm"
-                  : "text-theme-text-muted hover:text-theme-text-primary"
+                  ? "bg-surface-hover text-primary shadow-sm"
+                  : "text-muted hover:text-primary"
               )}
             >
               All Directives
@@ -273,8 +273,8 @@ export function SkillDirectivesModal({
               className={cn(
                 "text-xs px-2.5 py-1 rounded font-medium transition flex items-center gap-1",
                 activeTab === "required"
-                  ? "bg-theme-hover text-theme-text-primary shadow-sm"
-                  : "text-theme-text-muted hover:text-theme-text-primary"
+                  ? "bg-surface-hover text-primary shadow-sm"
+                  : "text-muted hover:text-primary"
               )}
             >
               Required
@@ -287,8 +287,8 @@ export function SkillDirectivesModal({
               className={cn(
                 "text-xs px-2.5 py-1 rounded font-medium transition",
                 activeTab === "behavioral"
-                  ? "bg-theme-hover text-theme-text-primary shadow-sm"
-                  : "text-theme-text-muted hover:text-theme-text-primary"
+                  ? "bg-surface-hover text-primary shadow-sm"
+                  : "text-muted hover:text-primary"
               )}
             >
               Behavioral & Subagent
@@ -298,8 +298,8 @@ export function SkillDirectivesModal({
               className={cn(
                 "text-xs px-2.5 py-1 rounded font-medium transition",
                 activeTab === "metadata"
-                  ? "bg-theme-hover text-theme-text-primary shadow-sm"
-                  : "text-theme-text-muted hover:text-theme-text-primary"
+                  ? "bg-surface-hover text-primary shadow-sm"
+                  : "text-muted hover:text-primary"
               )}
             >
               Metadata & Tags
@@ -310,7 +310,7 @@ export function SkillDirectivesModal({
                 "text-xs px-2.5 py-1 rounded font-medium transition flex items-center gap-1",
                 activeTab === "dci"
                   ? "bg-purple-500/15 text-purple-300 border border-purple-500/30 font-medium"
-                  : "text-theme-text-muted hover:text-theme-text-primary"
+                  : "text-muted hover:text-primary"
               )}
             >
               <Terminal className="w-3.5 h-3.5" /> DCI & Variables
@@ -321,7 +321,7 @@ export function SkillDirectivesModal({
                 "text-xs px-2.5 py-1 rounded font-medium transition flex items-center gap-1",
                 activeTab === "instructions"
                   ? "bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 font-medium"
-                  : "text-theme-text-muted hover:text-theme-text-primary"
+                  : "text-muted hover:text-primary"
               )}
             >
               <BookOpen className="w-3.5 h-3.5" /> Agent Instructions
@@ -345,9 +345,9 @@ export function SkillDirectivesModal({
               placeholder="Filter directives..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full text-xs px-2.5 py-1 pl-7 bg-theme-hover/60 border border-theme-border rounded focus:outline-none focus:ring-1 focus:ring-accent text-theme-text-primary placeholder:text-theme-text-muted"
+              className="w-full text-xs px-2.5 py-1 pl-7 bg-surface-hover/60 border border-border rounded focus:outline-none focus:ring-1 focus:ring-accent text-primary placeholder:text-muted"
             />
-            <HelpCircle className="w-3.5 h-3.5 text-theme-text-muted absolute left-2 top-2 pointer-events-none" />
+            <HelpCircle className="w-3.5 h-3.5 text-muted absolute left-2 top-2 pointer-events-none" />
           </div>
         </div>
 
@@ -357,10 +357,10 @@ export function SkillDirectivesModal({
             /* Templates View */
             <div className="flex-1 p-6 overflow-y-auto space-y-4">
               <div>
-                <h3 className="text-sm font-semibold text-theme-text-primary flex items-center gap-2">
+                <h3 className="text-sm font-semibold text-primary flex items-center gap-2">
                   <Sparkles className="w-4 h-4 text-accent" /> Ready-to-Use 2026 Agent Skill Templates
                 </h3>
-                <p className="text-xs text-theme-text-muted mt-0.5">
+                <p className="text-xs text-muted mt-0.5">
                   Pre-configured specifications with allowed-tools whitelist, DCI environment discovery, and deterministic agent instructions.
                 </p>
               </div>
@@ -448,7 +448,7 @@ export function SkillDirectivesModal({
                                 </span>
                               )}
                             </div>
-                            <p className="text-[11px] text-theme-text-muted truncate mt-0.5">
+                            <p className="text-[11px] text-muted truncate mt-0.5">
                               {directive.description}
                             </p>
                             {isSet && (
@@ -468,7 +468,7 @@ export function SkillDirectivesModal({
                                 <AlertCircle className="w-3.5 h-3.5" />
                               </span>
                             ) : (
-                              <span className="text-theme-text-muted group-hover:text-accent">
+                              <span className="text-muted group-hover:text-accent">
                                 <ChevronRight className="w-3.5 h-3.5" />
                               </span>
                             )}
@@ -482,7 +482,7 @@ export function SkillDirectivesModal({
                 {/* DCI & Body Features */}
                 {filteredBodyFeatures.length > 0 && (
                   <div className="space-y-1 pt-2">
-                    <div className="px-2 py-1 text-[10px] font-semibold text-theme-text-muted uppercase tracking-wider">
+                    <div className="px-2 py-1 text-[10px] font-semibold text-muted uppercase tracking-wider">
                       Dynamic Context & Variables ({filteredBodyFeatures.length})
                     </div>
                     {filteredBodyFeatures.map((feat) => {
@@ -496,20 +496,20 @@ export function SkillDirectivesModal({
                           className={cn(
                             "w-full text-left p-2.5 rounded-lg border transition flex items-start justify-between gap-2 group",
                             isSelected
-                              ? "bg-theme-hover border-purple-500/40 shadow-sm"
-                              : "border-transparent hover:bg-theme-hover/50 hover:border-theme-border"
+                              ? "bg-surface-hover border-purple-500/40 shadow-sm"
+                              : "border-transparent hover:bg-surface-hover/50 hover:border-border"
                           )}
                         >
                           <div className="min-w-0 flex-1">
                             <div className="flex items-center gap-2">
-                              <span className="text-xs font-semibold text-theme-text-primary group-hover:text-purple-300 transition">
+                              <span className="text-xs font-semibold text-primary group-hover:text-purple-300 transition">
                                 {feat.title}
                               </span>
                               <span className="text-[9px] px-1.5 py-0.2 rounded bg-purple-500/10 text-purple-400 border border-purple-500/20 font-mono">
                                 {feat.category}
                               </span>
                             </div>
-                            <code className="text-[10px] font-mono text-theme-text-muted block truncate mt-0.5">
+                            <code className="text-[10px] font-mono text-muted block truncate mt-0.5">
                               {feat.syntax}
                             </code>
                           </div>
@@ -520,7 +520,7 @@ export function SkillDirectivesModal({
                                 <Check className="w-3.5 h-3.5" />
                               </span>
                             ) : (
-                              <span className="text-theme-text-muted group-hover:text-purple-400">
+                              <span className="text-muted group-hover:text-purple-400">
                                 <Plus className="w-3.5 h-3.5" />
                               </span>
                             )}
@@ -534,7 +534,7 @@ export function SkillDirectivesModal({
                 {/* Instruction Sections */}
                 {filteredSections.length > 0 && (
                   <div className="space-y-1 pt-2">
-                    <div className="px-2 py-1 text-[10px] font-semibold text-theme-text-muted uppercase tracking-wider">
+                    <div className="px-2 py-1 text-[10px] font-semibold text-muted uppercase tracking-wider">
                       Agent Instructions Guidance ({filteredSections.length})
                     </div>
                     {filteredSections.map((sec) => {
@@ -548,20 +548,20 @@ export function SkillDirectivesModal({
                           className={cn(
                             "w-full text-left p-2.5 rounded-lg border transition flex items-start justify-between gap-2 group",
                             isSelected
-                              ? "bg-theme-hover border-emerald-500/40 shadow-sm"
-                              : "border-transparent hover:bg-theme-hover/50 hover:border-theme-border"
+                              ? "bg-surface-hover border-emerald-500/40 shadow-sm"
+                              : "border-transparent hover:bg-surface-hover/50 hover:border-border"
                           )}
                         >
                           <div className="min-w-0 flex-1">
                             <div className="flex items-center gap-2">
-                              <span className="text-xs font-semibold text-theme-text-primary group-hover:text-emerald-400 transition">
+                              <span className="text-xs font-semibold text-primary group-hover:text-emerald-400 transition">
                                 {sec.title}
                               </span>
                               <span className="text-[9px] px-1.5 py-0.2 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-mono">
                                 Section
                               </span>
                             </div>
-                            <p className="text-[11px] text-theme-text-muted truncate mt-0.5">
+                            <p className="text-[11px] text-muted truncate mt-0.5">
                               {sec.description}
                             </p>
                           </div>
@@ -572,7 +572,7 @@ export function SkillDirectivesModal({
                                 <Check className="w-3.5 h-3.5" />
                               </span>
                             ) : (
-                              <span className="text-theme-text-muted group-hover:text-emerald-400">
+                              <span className="text-muted group-hover:text-emerald-400">
                                 <Plus className="w-3.5 h-3.5" />
                               </span>
                             )}
@@ -668,10 +668,10 @@ export function SkillDirectivesModal({
                             onChange={(e) => setDirectiveValue(e.target.value)}
                             placeholder={selectedDirective.placeholder}
                             rows={4}
-                            className="w-full text-xs p-3 bg-theme-hover/60 border border-theme-border rounded focus:outline-none focus:ring-1 focus:ring-accent text-theme-text-primary placeholder:text-theme-text-muted resize-none leading-relaxed"
+                            className="w-full text-xs p-3 bg-surface-hover/60 border border-border rounded focus:outline-none focus:ring-1 focus:ring-accent text-primary placeholder:text-muted resize-none leading-relaxed"
                           />
                           <div className="flex items-center gap-1.5 flex-wrap">
-                            <span className="text-[10px] text-theme-text-muted font-medium">Quick trigger templates:</span>
+                            <span className="text-[10px] text-muted font-medium">Quick trigger templates:</span>
                             <button
                               type="button"
                               onClick={() =>
@@ -680,7 +680,7 @@ export function SkillDirectivesModal({
                                     "Use when the user asks to review changes, check diffs, or audit configurations."
                                 )
                               }
-                              className="text-[10px] px-2 py-0.5 bg-theme-hover hover:bg-theme-border rounded border border-theme-border text-theme-text-secondary"
+                              className="text-[10px] px-2 py-0.5 bg-surface-hover hover:bg-border rounded border border-border text-secondary"
                             >
                               + "Use when the user asks to..."
                             </button>
@@ -692,7 +692,7 @@ export function SkillDirectivesModal({
                                     'Trigger phrases include "review PR", "check my changes", "code review".'
                                 )
                               }
-                              className="text-[10px] px-2 py-0.5 bg-theme-hover hover:bg-theme-border rounded border border-theme-border text-theme-text-secondary"
+                              className="text-[10px] px-2 py-0.5 bg-surface-hover hover:bg-border rounded border border-border text-secondary"
                             >
                               + 'Trigger phrases include...'
                             </button>
@@ -703,7 +703,7 @@ export function SkillDirectivesModal({
                       {/* Multiselect Tools Whitelist */}
                       {selectedDirective.inputType === "multiselect" && (
                         <div className="space-y-2.5">
-                          <div className="flex flex-wrap gap-1.5 max-h-48 overflow-y-auto p-1 bg-theme-hover/20 rounded border border-theme-border/50">
+                          <div className="flex flex-wrap gap-1.5 max-h-48 overflow-y-auto p-1 bg-surface-hover/20 rounded border border-border/50">
                             {CANONICAL_AGENT_TOOLS.map((tool) => {
                               let list: string[] = [];
                               if (Array.isArray(directiveValue)) {
@@ -730,7 +730,7 @@ export function SkillDirectivesModal({
                                     "text-[11px] font-mono px-2.5 py-1 rounded-full border transition flex items-center gap-1.5",
                                     isChecked
                                       ? "bg-accent/15 text-accent border-accent/30 font-medium"
-                                      : "bg-theme-hover/40 text-theme-text-muted border-theme-border hover:text-theme-text-primary"
+                                      : "bg-surface-hover/40 text-muted border-border hover:text-primary"
                                   )}
                                 >
                                   {isChecked ? <Check className="w-3 h-3" /> : <Plus className="w-3 h-3" />}
@@ -739,7 +739,7 @@ export function SkillDirectivesModal({
                               );
                             })}
                           </div>
-                          <p className="text-[11px] text-theme-text-muted">
+                          <p className="text-[11px] text-muted">
                             Least privilege enforcement: only tools listed here are permitted during skill execution.
                           </p>
                         </div>
@@ -751,7 +751,7 @@ export function SkillDirectivesModal({
                           <select
                             value={String(directiveValue || "")}
                             onChange={(e) => setDirectiveValue(e.target.value)}
-                            className="w-full text-xs px-3 py-2 bg-theme-hover/60 border border-theme-border rounded focus:outline-none focus:ring-1 focus:ring-accent text-theme-text-primary"
+                            className="w-full text-xs px-3 py-2 bg-surface-hover/60 border border-border rounded focus:outline-none focus:ring-1 focus:ring-accent text-primary"
                           >
                             {selectedDirective.options?.map((opt) => (
                               <option key={opt} value={opt}>
@@ -760,7 +760,7 @@ export function SkillDirectivesModal({
                             ))}
                           </select>
                           {selectedDirective.id === "context" && (
-                            <div className="p-2.5 bg-accent/5 border border-accent/15 rounded text-[11px] text-theme-text-muted space-y-1">
+                            <div className="p-2.5 bg-accent/5 border border-accent/15 rounded text-[11px] text-muted space-y-1">
                               <div>
                                 <strong className="text-accent">fork:</strong> Runs in a subagent (separate context window) to avoid polluting main chat.
                               </div>
@@ -780,7 +780,7 @@ export function SkillDirectivesModal({
                             onClick={() => setDirectiveValue(!directiveValue)}
                             className={cn(
                               "relative inline-flex h-5 w-10 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none",
-                              directiveValue ? "bg-accent" : "bg-theme-hover border-theme-border"
+                              directiveValue ? "bg-accent" : "bg-surface-hover border-border"
                             )}
                           >
                             <span
@@ -790,7 +790,7 @@ export function SkillDirectivesModal({
                               )}
                             />
                           </button>
-                          <span className="text-xs font-mono text-theme-text-primary">
+                          <span className="text-xs font-mono text-primary">
                             {directiveValue ? "true (enabled)" : "false (disabled)"}
                           </span>
                         </div>
@@ -815,9 +815,9 @@ export function SkillDirectivesModal({
                               )
                             }
                             placeholder="devops, security, kubernetes"
-                            className="w-full text-xs px-3 py-2 bg-theme-hover/60 border border-theme-border rounded focus:outline-none focus:ring-1 focus:ring-accent font-mono text-theme-text-primary placeholder:text-theme-text-muted"
+                            className="w-full text-xs px-3 py-2 bg-surface-hover/60 border border-border rounded focus:outline-none focus:ring-1 focus:ring-accent font-mono text-primary placeholder:text-muted"
                           />
-                          <p className="text-[11px] text-theme-text-muted">
+                          <p className="text-[11px] text-muted">
                             Comma-separated tags for marketplace search and discovery.
                           </p>
                         </div>
@@ -830,7 +830,7 @@ export function SkillDirectivesModal({
                           onChange={(e) => setDirectiveValue(e.target.value)}
                           placeholder={selectedDirective.placeholder}
                           rows={3}
-                          className="w-full text-xs p-2.5 font-mono bg-theme-hover/60 border border-theme-border rounded focus:outline-none focus:ring-1 focus:ring-accent text-theme-text-primary placeholder:text-theme-text-muted resize-none"
+                          className="w-full text-xs p-2.5 font-mono bg-surface-hover/60 border border-border rounded focus:outline-none focus:ring-1 focus:ring-accent text-primary placeholder:text-muted resize-none"
                         />
                       )}
 
@@ -841,17 +841,17 @@ export function SkillDirectivesModal({
                           value={String(directiveValue || "")}
                           onChange={(e) => setDirectiveValue(e.target.value)}
                           placeholder={selectedDirective.placeholder}
-                          className="w-full text-xs px-3 py-2 bg-theme-hover/60 border border-theme-border rounded focus:outline-none focus:ring-1 focus:ring-accent font-mono text-theme-text-primary placeholder:text-theme-text-muted"
+                          className="w-full text-xs px-3 py-2 bg-surface-hover/60 border border-border rounded focus:outline-none focus:ring-1 focus:ring-accent font-mono text-primary placeholder:text-muted"
                         />
                       )}
                     </div>
 
                     {/* YAML Live Preview */}
                     <div className="space-y-1.5 pt-2">
-                      <label className="text-[10px] font-semibold text-theme-text-muted uppercase tracking-wider">
+                      <label className="text-[10px] font-semibold text-muted uppercase tracking-wider">
                         Generated Frontmatter Snippet
                       </label>
-                      <pre className="p-3 bg-theme-hover/40 border border-theme-border rounded font-mono text-xs text-theme-text-primary overflow-x-auto">
+                      <pre className="p-3 bg-surface-hover/40 border border-border rounded font-mono text-xs text-primary overflow-x-auto">
                         <code>
                           {selectedDirective.id}: {formatYamlValue(directiveValue, selectedDirective.id === "description")}
                         </code>
@@ -859,7 +859,7 @@ export function SkillDirectivesModal({
                     </div>
 
                     {/* Action Buttons */}
-                    <div className="flex items-center justify-between pt-3 border-t border-theme-border">
+                    <div className="flex items-center justify-between pt-3 border-t border-border">
                       {parsedDoc.frontmatter[selectedDirective.id] !== undefined ? (
                         <button
                           type="button"
@@ -884,9 +884,9 @@ export function SkillDirectivesModal({
                 ) : selectedBodyFeature ? (
                   /* DCI & Variable Feature Helper */
                   <div className="space-y-4 max-w-xl">
-                    <div className="border-b border-theme-border pb-3">
+                    <div className="border-b border-border pb-3">
                       <div className="flex items-center justify-between">
-                        <h3 className="text-sm font-bold text-theme-text-primary flex items-center gap-2">
+                        <h3 className="text-sm font-bold text-primary flex items-center gap-2">
                           <Terminal className="w-4 h-4 text-purple-400" />
                           {selectedBodyFeature.title}
                         </h3>
@@ -894,30 +894,30 @@ export function SkillDirectivesModal({
                           {selectedBodyFeature.category}
                         </span>
                       </div>
-                      <p className="text-xs text-theme-text-secondary mt-1.5 leading-relaxed">
+                      <p className="text-xs text-secondary mt-1.5 leading-relaxed">
                         {selectedBodyFeature.description}
                       </p>
                     </div>
 
                     <div className="space-y-2">
-                      <label className="text-[10px] font-semibold text-theme-text-muted uppercase tracking-wider">
+                      <label className="text-[10px] font-semibold text-muted uppercase tracking-wider">
                         Syntax / Snippet
                       </label>
-                      <pre className="p-3 bg-theme-hover/40 border border-theme-border rounded font-mono text-xs text-purple-300 overflow-x-auto whitespace-pre-wrap">
+                      <pre className="p-3 bg-surface-hover/40 border border-border rounded font-mono text-xs text-purple-300 overflow-x-auto whitespace-pre-wrap">
                         <code>{selectedBodyFeature.template}</code>
                       </pre>
                     </div>
 
                     <div className="space-y-2">
-                      <label className="text-[10px] font-semibold text-theme-text-muted uppercase tracking-wider">
+                      <label className="text-[10px] font-semibold text-muted uppercase tracking-wider">
                         Usage Context Example
                       </label>
-                      <pre className="p-3 bg-theme-hover/30 border border-theme-border/60 rounded font-mono text-xs text-theme-text-primary overflow-x-auto whitespace-pre-wrap leading-relaxed">
+                      <pre className="p-3 bg-surface-hover/30 border border-border/60 rounded font-mono text-xs text-primary overflow-x-auto whitespace-pre-wrap leading-relaxed">
                         <code>{selectedBodyFeature.example}</code>
                       </pre>
                     </div>
 
-                    <div className="flex justify-end pt-3 border-t border-theme-border">
+                    <div className="flex justify-end pt-3 border-t border-border">
                       <button
                         type="button"
                         onClick={() => handleInsertBodyFeature(selectedBodyFeature)}
@@ -930,19 +930,19 @@ export function SkillDirectivesModal({
                 ) : selectedSection ? (
                   /* Agent Instruction Section */
                   <div className="space-y-4 max-w-xl">
-                    <div className="border-b border-theme-border pb-3">
+                    <div className="border-b border-border pb-3">
                       <div className="flex items-center justify-between">
-                        <h3 className="text-sm font-bold text-theme-text-primary">
+                        <h3 className="text-sm font-bold text-primary">
                           {selectedSection.title}
                         </h3>
                         <span className="text-[10px] px-2 py-0.5 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 rounded font-mono font-medium">
                           {selectedSection.heading}
                         </span>
                       </div>
-                      <p className="text-xs text-theme-text-secondary mt-1 leading-relaxed">
+                      <p className="text-xs text-secondary mt-1 leading-relaxed">
                         {selectedSection.description}
                       </p>
-                      <div className="mt-2 p-2.5 bg-emerald-500/5 border border-emerald-500/15 rounded text-[11px] text-theme-text-muted flex items-start gap-2">
+                      <div className="mt-2 p-2.5 bg-emerald-500/5 border border-emerald-500/15 rounded text-[11px] text-muted flex items-start gap-2">
                         <Sparkles className="w-3.5 h-3.5 text-emerald-400 shrink-0 mt-0.5" />
                         <div>
                           <strong className="text-emerald-300">Agent Benefit: </strong>
@@ -952,15 +952,15 @@ export function SkillDirectivesModal({
                     </div>
 
                     <div className="space-y-1.5">
-                      <label className="text-[10px] font-semibold text-theme-text-muted uppercase tracking-wider">
+                      <label className="text-[10px] font-semibold text-muted uppercase tracking-wider">
                         Section Template
                       </label>
-                      <pre className="p-3 bg-theme-hover/40 border border-theme-border rounded font-mono text-xs text-theme-text-primary overflow-x-auto whitespace-pre-wrap leading-relaxed max-h-72">
+                      <pre className="p-3 bg-surface-hover/40 border border-border rounded font-mono text-xs text-primary overflow-x-auto whitespace-pre-wrap leading-relaxed max-h-72">
                         <code>{selectedSection.template}</code>
                       </pre>
                     </div>
 
-                    <div className="flex justify-end pt-3 border-t border-theme-border">
+                    <div className="flex justify-end pt-3 border-t border-border">
                       <button
                         type="button"
                         onClick={() => handleApplySection(selectedSection)}
@@ -971,8 +971,8 @@ export function SkillDirectivesModal({
                     </div>
                   </div>
                 ) : (
-                  <div className="flex-1 flex flex-col items-center justify-center text-theme-text-muted text-xs">
-                    <Sliders className="w-8 h-8 text-theme-text-muted/40 mb-2" />
+                  <div className="flex-1 flex flex-col items-center justify-center text-muted text-xs">
+                    <Sliders className="w-8 h-8 text-muted/40 mb-2" />
                     <span>Select a directive, DCI snippet, or instruction section from the left panel</span>
                   </div>
                 )}
