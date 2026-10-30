@@ -71,6 +71,7 @@ export function SkillCodeEditor({
   // Synchronize when value changes externally (e.g. file switched, auto-fixed, or reverted)
   useEffect(() => {
     if (value !== lastEmittedValueRef.current) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setLocalText(value);
       lastEmittedValueRef.current = value;
       setDebouncedPreviewText(value);
@@ -190,7 +191,7 @@ export function SkillCodeEditor({
     onSave();
   };
 
-  const handleQuickAddDirective = (key: string, defaultVal: any) => {
+  const handleQuickAddDirective = (key: string, defaultVal: unknown) => {
     setShowQuickInsertMenu(false);
     const updated = upsertFrontmatterDirective(localText, key, defaultVal);
     setLocalText(updated);

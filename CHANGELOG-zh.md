@@ -5,6 +5,88 @@
 格式基于 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，
 版本号遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [1.43.1] - 2026-10-27
+
+### 发布概览
+- 技能库没变时，你在 Agent 目录里改过的副本不再被日常同步覆盖；CLI 的 `skills check` 现在会检查从本地文件夹安装的 Skill。
+
+### 用户可见更新
+- **技能库没变时，改过的副本不再被覆盖** — 以复制方式部署的 Skill，在 PresetBar 应用 Preset、从「添加 Skills」弹层添加、批量部署、安装后的同步，以及内容没变的更新或重新导入时，都会被重新复制一遍，你在 Agent 目录里做的修改随之丢失。现在只要技能库的内容和部署时一样，这些操作就不动副本，和启动时的同步一致。技能库真的更新时，副本仍会被替换，和以前一样。这样的副本要等下次内容变化，或取消部署后重新部署，才会改成链接（#598）。
+- **`skills-manager-cli skills check` 会检查本地 Skill** — 以前对从本地文件夹安装或导入的 Skill 直接跳过，输出 `skipped: true`。现在和应用一样，拿它和源文件夹比对，报告 `up_to_date`、`update_available` 或 `source_missing`。本地检查每次都实际执行，更新检查的缓存只用于 Git 来源。来自网站的 Skill 仍然跳过（#597、#590）。
+
+### 开发者与治理更新
+- 启动同步用来判断「已部署的副本是否仍是最新」的检查，抽成了一个函数 `recorded_target_is_current`，五个同步入口都调用它。只看调用方 Agent 自己的记录，所以多个 Agent 共用一个技能目录时（amp 与 replit、cline 与 warp），行为和以前一样。副本的位置上放着文件或指向别处的链接时，启动同步现在会报告拒绝写入，而不是静默跳过（#598）。
+- `skills/manage-skills` 补充说明：本地 Skill 的 `check` 比对的是什么，`update_available` 和 `source_missing` 是什么意思（#597）。
+## [1.43.0] - 2026-10-21
+
+### 发布概览
+- 「我的 Skill」可以按来源筛选和分组；新增支持 MiniMax Code 和海外版 WorkBuddy。从全局工作区上传的 Skill 下次启动不再消失；Agent 的技能目录换了位置，改过的副本也不会被删；设置页会当场拒绝下次启动无法迁入的中央仓库目录。
+
+### 用户可见更新
+- **「我的 Skill」按来源筛选和分组** — 来源选择器只显示来自某个来源的 Skill；打开分组后，每个来源归到一个标题下，并显示 Skill 数量。同一个仓库不管是用 SSH、HTTPS、`owner/repo` 还是 skills.sh 添加的，都算一个来源；网站来源的 Skill 按域名分组。多于一个 Skill 的来源默认折叠，搜索时所有分组都会展开。分组时不能拖动排序。感谢 @ZhuYichuan（#589、#530）。
+- **MiniMax Code** 成为内置 Agent：用户级 Skill 部署到 `~/.minimax/skills`，项目级部署到 `<repo>/.minimax/skills`。感谢 @ZhuYichuan（#592）。
+- **WorkBuddy AI（海外版）** — 海外版 WorkBuddy 从 `~/.workbuddy-ai/skills` 读取 Skill，所以部署给 WorkBuddy 的 Skill 在海外版里从来没被加载。现在它是单独的 Agent「WorkBuddy AI」；国内版仍用 `~/.workbuddy/skills`。感谢 @huaqian0226（#588、#587、#468）。
+- **从全局工作区上传的 Skill 会留在技能库里** — 上传后，下次启动应用或 CLI 时，这个 Skill 和它的部署记录可能从技能库里消失，文件却还在磁盘上。现在上传会把技能库需要的信息都存好。已经丢失的记录不会恢复。感谢 @drkraft（#586）。
+- **Agent 的技能目录换了位置，改过的副本不会被删** — 在设置里改了 Agent 的技能目录，或者更新后它的默认路径变了，旧路径下以复制方式部署的 Skill 会连同你在里面的修改一起被删掉。现在这些副本会移到技能库里的 `kept-copies/<agent>/`。旧路径下的链接仍然删除。取消部署、停用 Agent、切换到不含这个 Skill 的 Preset，仍然会删掉副本（#595、#593）。
+- **设置页拒绝无法迁入的中央仓库目录** — 新的技能库位置要到下次启动才生效，而启动时会拒绝非空目录和位于当前技能库内的目录，并且不提示，看起来就像设置没生效（#509、#541）。现在保存时就会拒绝这样的目录，并给出提示，不再显示 `[object Object]`。迁移警告显示在路径下方，提示里也写明要完全退出应用（包括托盘）（#596）。
+- **来源里没有某个 Skill 时，报错更清楚** — 安装一个在取得的仓库版本里不存在的 Skill，报错里显示的是一个临时目录路径。现在报错会写出 Skill 的名字，并提示检查来源和子路径（#594）。
+- **Windows：可以用 Scoop 安装** — 先 `scoop bucket add extras`，再 `scoop install extras/skills-manager`。感谢 @12dxc 把它加入 Scoop Extras（#591）。
+
+### 开发者与治理更新
+- 前端组件测试：Vitest + jsdom，新增 `npm test` 脚本和 PresetBar 的测试，Frontend CI 会运行它们。感谢 @huoguojun123（#570）。
+- 新增 `REVIEW.md`：按改动涉及的内容决定评审深度，并列出本仓库反复出现的缺陷类型。
+- 判断「目标是否在当前技能库内」时会先解析链接，保存路径和启动迁移都是如此。以前经由链接指回技能库的目标能通过检查，启动迁移随后会尝试把技能库复制进它自己（#596）。
+- `sync_skill_to_active_scenario` 和 `sync_desired_targets` 一样，不再动另一个工具正在使用的部署路径（#595）。
+## [1.42.2] - 2026-10-18
+
+### 发布概览
+- 两项 Linux / Windows 修复：Linux AppImage 里的备份和 Git 安装恢复正常；Windows 和 Linux 的窗口顶部不再有一条空白。
+
+### 用户可见更新
+- **Linux AppImage：备份和 Git 安装恢复正常** — 在 AppImage 里，「立即备份」以及从 Git 安装、更新 Skill 可能失败，报 Git HTTPS helper / libcurl 符号查找错误。原因是系统的 `git` 加载了 AppImage 自带的库。现在 Git 使用系统自己的库。感谢 @JonathanPitre（#539、#536）。
+- **Windows 和 Linux：窗口顶部不再有空白条** — 为 macOS 窗口按钮预留的 28px 空白条，在 Windows 和 Linux 上也会出现在原生标题栏下方。现在只在 macOS 上保留。感谢 @YageGeng（#547）。
+
+### 开发者与治理更新
+- `git_fetcher.rs` 和 `git_backup.rs` 里两份相同的 `git_command()` 合并到 `core/git_command.rs`。Linux 上设置了 `APPDIR` 时，Git 子进程不再继承 `LD_LIBRARY_PATH`，应用自身的环境不变。新增的回归测试只在 Linux 上运行，而 Linux CI 只跑 `cargo check`。
+## [1.42.1] - 2026-10-17
+
+### 发布概览
+- 修复几类问题：从 Preset 移除的 Skill 重启后又回来；Preset 的改动不同步到其他设备；monorepo 里的 Skill 总显示有更新；点一下就删掉工作区目录。另外，市场页会显示真实的报错原因，本地安装、Windows 和 Linux 上也各有小修复。
+
+### 用户可见更新
+- **从工作区移除 Skill 前先确认** — 在技能库 Skill 详情的「项目工作区」区块里，点绿色的「已添加」会直接删掉工作区里这个 Skill 的目录。删除不进废纸篓；如果是关联工作区，删掉的就是 Agent 正在读的那个目录。现在点了会先确认。项目页上，关闭某个 Skill 的 Agent 开关或取消某个 Preset 时，如果工作区里的副本与技能库不一致，也会先确认（#542）。
+- **从当前生效的 Preset 移除的 Skill 不再复活** — 移除一个属于当前生效 Preset 的 Skill 后，下次启动它又会被装回来。不论是在 Agent 页、在托盘，还是用 `skills-manager-cli presets undeploy` / `skills undeploy` 移除，都有这个问题。现在会记住这次移除；重新部署则会恢复（#549）。
+- **移除最后一个 Preset 成员也能同步到其他设备** — 把 Preset 里最后一个 Skill 移除后，其他设备上的旧成员不会被删掉，还可能被它们重新备份上去，于是已移除的 Skill 在所有设备上又出现了。现在移除能正常同步（#553）。
+- **monorepo 里的 Skill 不再总显示「有更新」** — 从仓库某个子目录安装的 Skill，过去只要仓库里任何地方有新提交，就会显示「有更新」。现在只有它自己的目录变了才算（#561、#507）。
+- **可以移除部分已添加的 Preset** — 一个 Preset 只有部分 Skill 在工作区里时，旁边会出现 ×，点它即可移除这些 Skill。感谢 @huoguojun123（#571）。
+- **市场页显示真实的报错原因** — 连不上 skills.sh 时，过去只显示 `[object Object]`，现在会显示具体原因，比如超时或 DNS 解析失败（#529）。
+- **上传「仅本地」的 Skill 不再报 infinite recursion** — 当这个 Skill 的目录是指回技能库的软链时，过去会报这个错。感谢 @shuaiyafei（#565、#560）。
+- **Windows：本地安装 Skill** 后，提示里显示的是 Skill 的名称，不再是完整路径。感谢 @shuaiyafei（#558、#512）。
+- **Linux：同时运行其他 Tauri 应用时，托盘图标不再被换成它的图标**。感谢 @jubeater（#564、#563）。
+
+### 开发者与治理更新
+- 设置页改为运行时用 `getVersion()` 读取版本号；语言文件里存的是 `{{version}}` 模板，`release:prepare` 不再改写它们。感谢 @shuaiyafei（#557、#511）。
+- 同步 metadata 中，只要 `schema.json` 和 `scenarios/` 都在，Preset 快照就算完整；缺 `scenario-skills/` 表示零个成员，因为 Git 不保存空目录。
+- 在 Skill 详情面板之外修改的 Preset 按 Agent 开关，现在会在 repo 锁内写回该成员的 metadata 文件。过去只存在数据库里，下次 reindex 会被覆盖。`apply_skills_to_tools` 在添加或移除之前，会先写当前生效 Preset 中相关 Skill 的开关。
+- 子目录 Skill 的更新检查只把 tree 和 commit（`--filter=blob:none --depth=1`）取到一个用完即删的 bare 仓库，用 libgit2 比较该子目录的 tree 以及沿途每一级 `.gitattributes`。任何失败都仍按「有更新」处理。
+- 本地安装时，技能库里的目标是真实目录才直接返回；如果目标是软链，仍会复制成真实目录。
+## [1.42.0] - 2026-10-14
+
+### 发布概览
+- 新增西班牙语和韩语界面，繁体中文翻译补全；搜索时 `-`、`_` 和空格视为相同；macOS 上点击 Dock 图标可唤回窗口；配色、字号与圆角更统一，浅色模式更易读。
+
+### 用户可见更新
+- **西班牙语和韩语界面** — 在「设置 → 语言」里选 Español 或 한국어。首次启动时，如果系统语言是西班牙语或韩语，会自动选中。语言增加到五种，这一项改成了下拉框。感谢 @Carlo1911（#476）和 @siakun（#355）。
+- **繁体中文翻译补全** — 此前仍显示为简体中文的 72 条文案已全部翻译，包括关闭行为、托盘图标、代理设置、来源差异和批量编辑标签等。
+- **搜索时 `-`、`_` 和空格视为相同** — 搜「wrap up」能找到 `wrap-up`，技能库、Agent 工作区、项目页、命令面板和「添加 Skill」都一样；技能库还会搜索 Skill 的目录名。感谢 @shuaiyafei（#543、#510）。
+- **macOS：点击 Dock 图标可唤回窗口** — 窗口关闭到托盘或最小化后，点 Dock 图标会重新显示。感谢 @sean0407（#538、#526）。
+- **浅色模式更易读** — Preset 图标、状态图标，以及部分成功、警告和删除文字，原先用的是给深色背景设计的颜色，在浅色背景上几乎看不清。全应用的字号和圆角也统一到同一套档位（#544、#545、#551）。
+
+### 开发者与治理更新
+- `npm run lint` 新增两项检查。`scripts/check-ui-spec.mjs` 拦截档位之外的圆角和字号、类名里写死的颜色，以及只在一种主题下可读的调色板文字色。`scripts/check-i18n.mjs` 要求 `zh.json` 与 `en.json` 逐键对应；其他语种允许缺键（缺的会回落到英文），但不能保留 `en.json` 已删除的键，占位符也必须一致。
+- `release:prepare` 会更新每个 `src/i18n/*.json` 里的版本号，新增语种不用再改脚本。「Prepare Release」工作流现在会提交脚本改动的全部文件，此前只提交其中五个。
+- 所有技能搜索共用 `src/lib/skillSearch.ts`。
+- `RunEvent::Reopen` 的处理只在 macOS 上生效，Windows 和 Linux 构建不再报参数未使用的警告（#552）。
 ## [1.41.0] - 2026-10-11
 
 ### 发布概览

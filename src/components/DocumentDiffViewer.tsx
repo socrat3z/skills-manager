@@ -521,7 +521,7 @@ function renderContentWithParts(parts: InlineDiffPart[] | undefined, fallback: s
           return (
             <mark
               key={idx}
-              className="bg-rose-500/30 dark:bg-rose-500/40 text-rose-950 dark:text-rose-100 font-semibold rounded-xs px-0.5"
+              className="bg-rose-500/30 dark:bg-rose-500/40 text-rose-950 dark:text-rose-100 font-semibold rounded-md px-0.5"
             >
               {part.text}
             </mark>
@@ -531,7 +531,7 @@ function renderContentWithParts(parts: InlineDiffPart[] | undefined, fallback: s
           return (
             <mark
               key={idx}
-              className="bg-emerald-500/30 dark:bg-emerald-500/40 text-emerald-950 dark:text-emerald-100 font-semibold rounded-xs px-0.5"
+              className="bg-emerald-500/30 dark:bg-emerald-500/40 text-emerald-950 dark:text-emerald-100 font-semibold rounded-md px-0.5"
             >
               {part.text}
             </mark>
@@ -562,7 +562,7 @@ export function DocumentDiffViewer({
   if (hunks.length === 0) {
     return (
       <div className={cn("rounded-xl border border-border bg-surface px-4 py-8 text-center", className)}>
-        <div className="text-xs font-medium text-muted">No content changes detected</div>
+        <div className="text-[12px] font-medium text-muted">No content changes detected</div>
       </div>
     );
   }
@@ -570,7 +570,7 @@ export function DocumentDiffViewer({
   return (
     <div className={cn("space-y-3", className)}>
       {/* Diff Toolbar & Mode Toggle */}
-      <div className="flex items-center justify-between px-3 py-2 bg-surface border border-border rounded-xl shadow-xs text-xs">
+      <div className="flex items-center justify-between px-3 py-2 bg-surface border border-border rounded-xl shadow-xs text-[12px]">
         <div className="flex items-center gap-3 flex-wrap">
           <span className="font-semibold text-primary">Diff Summary:</span>
           {modifications > 0 && (
@@ -596,7 +596,7 @@ export function DocumentDiffViewer({
             type="button"
             onClick={() => setViewMode("split")}
             className={cn(
-              "px-2 py-1 text-xs rounded-md font-medium transition flex items-center gap-1.5",
+              "px-2 py-1 text-[12px] rounded-md font-medium transition flex items-center gap-1.5",
               viewMode === "split"
                 ? "bg-surface text-primary shadow-xs"
                 : "text-muted hover:text-primary"
@@ -610,7 +610,7 @@ export function DocumentDiffViewer({
             type="button"
             onClick={() => setViewMode("unified")}
             className={cn(
-              "px-2 py-1 text-xs rounded-md font-medium transition flex items-center gap-1.5",
+              "px-2 py-1 text-[12px] rounded-md font-medium transition flex items-center gap-1.5",
               viewMode === "unified"
                 ? "bg-surface text-primary shadow-xs"
                 : "text-muted hover:text-primary"
@@ -631,7 +631,7 @@ export function DocumentDiffViewer({
             <span>
               @@ -{hunk.leftStart},{hunk.leftCount} +{hunk.rightStart},{hunk.rightCount} @@
             </span>
-            <span className="text-[10px] text-sky-600/80 dark:text-sky-400/80 font-sans font-normal">
+            <span className="text-[11px] text-sky-600/80 dark:text-sky-400/80 font-sans font-normal">
               {viewMode === "split" ? "Side-by-Side View" : "Unified View"}
             </span>
           </div>

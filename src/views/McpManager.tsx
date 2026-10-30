@@ -90,7 +90,7 @@ export function McpManager() {
       setInventory(invData);
       setPresets(presetData);
       setGitSources(gitSrcData);
-    } catch (err: any) {
+    } catch (err: unknown) {
       toast.error(`Failed to load MCP Inventory: ${err}`);
     } finally {
       setLoading(false);
@@ -101,7 +101,7 @@ export function McpManager() {
     try {
       const list = await api.getHarnessBackups(harnessKey);
       setBackups(list);
-    } catch (err: any) {
+    } catch (err: unknown) {
       toast.error(`Failed to load backups for ${harnessKey}: ${err}`);
     }
   };
@@ -143,7 +143,7 @@ export function McpManager() {
       setGitName("");
       setGitRepoUrl("");
       setGitBranch("main");
-    } catch (err: any) {
+    } catch (err: unknown) {
       toast.error(`Failed to add Git source: ${err}`);
     }
   };
@@ -154,7 +154,7 @@ export function McpManager() {
       const updated = await api.syncGitMcpSources();
       setGitSources(updated);
       toast.success("Synced all Git profile sources!");
-    } catch (err: any) {
+    } catch (err: unknown) {
       toast.error(`Git sync failed: ${err}`);
     } finally {
       setIsSyncingGit(false);
@@ -168,7 +168,7 @@ export function McpManager() {
       setGitSources(updated);
       toast.success(`Removed Git source '${gitDeleteTarget.name}'`);
       setGitDeleteTarget(null);
-    } catch (err: any) {
+    } catch (err: unknown) {
       toast.error(`Failed to remove Git source: ${err}`);
       setGitDeleteTarget(null);
     }
@@ -192,7 +192,7 @@ export function McpManager() {
       const updated = await api.saveMcpServer(server, targetHarnesses);
       setInventory(updated);
       toast.success(`MCP Server '${server.name}' saved & deployed`);
-    } catch (err: any) {
+    } catch (err: unknown) {
       toast.error(`Failed to save MCP server: ${err}`);
     }
   };
@@ -205,7 +205,7 @@ export function McpManager() {
       setInventory(updated);
       toast.success(`Deleted MCP Server '${deleteTarget.name}'`);
       setDeleteTarget(null);
-    } catch (err: any) {
+    } catch (err: unknown) {
       toast.error(`Failed to delete MCP server: ${err}`);
     }
   };
@@ -219,7 +219,7 @@ export function McpManager() {
       const updated = await api.toggleMcpServer(serverId, harnessKey, enabled);
       setInventory(updated);
       toast.success(`Updated ${harnessKey} state for ${serverId}`);
-    } catch (err: any) {
+    } catch (err: unknown) {
       toast.error(`Failed to toggle harness: ${err}`);
     }
   };
@@ -233,7 +233,7 @@ export function McpManager() {
           ? `Enabled all MCP servers for ${harnessKey}`
           : `Disabled all MCP servers for ${harnessKey}`
       );
-    } catch (err: any) {
+    } catch (err: unknown) {
       toast.error(`Bulk toggle failed: ${err}`);
     }
   };
@@ -245,7 +245,7 @@ export function McpManager() {
       const updated = await api.activateMcpProfile(profile.id, targetKeys);
       setInventory(updated);
       toast.success(`Activated '${profile.name}' profile across all AI harnesses!`);
-    } catch (err: any) {
+    } catch (err: unknown) {
       toast.error(`Profile activation failed: ${err}`);
     }
   };
@@ -256,7 +256,7 @@ export function McpManager() {
       await api.backupHarnessConfig(harnessKey);
       toast.success(`Backup created for ${harnessKey}`);
       loadBackups(harnessKey);
-    } catch (err: any) {
+    } catch (err: unknown) {
       toast.error(`Backup failed: ${err}`);
     } finally {
       setIsBackingUp(false);
@@ -269,7 +269,7 @@ export function McpManager() {
       setInventory(updated);
       toast.success(`Restored ${harnessKey} configuration from backup`);
       loadBackups(harnessKey);
-    } catch (err: any) {
+    } catch (err: unknown) {
       toast.error(`Restore failed: ${err}`);
     }
   };
@@ -281,7 +281,7 @@ export function McpManager() {
       const updated = await api.syncAllMcpServers(targetKeys);
       setInventory(updated);
       toast.success("Successfully synced all MCP servers across all AI harnesses!");
-    } catch (err: any) {
+    } catch (err: unknown) {
       toast.error(`Sync failed: ${err}`);
     }
   };
@@ -292,7 +292,7 @@ export function McpManager() {
       setJsonContent(jsonStr);
       setSelectedHarnessKeyForJson(null);
       setIsJsonOpen(true);
-    } catch (err: any) {
+    } catch (err: unknown) {
       toast.error(`Export failed: ${err}`);
     }
   };
@@ -307,7 +307,7 @@ export function McpManager() {
       const updated = await api.saveHarnessConfigContent(harnessKey, content);
       setInventory(updated);
       toast.success(`Saved and re-synced configuration for ${harnessKey}`);
-    } catch (err: any) {
+    } catch (err: unknown) {
       toast.error(`Failed to save ${harnessKey} config: ${err}`);
       throw err;
     }
@@ -320,7 +320,7 @@ export function McpManager() {
       const updated = await api.importMcpConfig(jsonStr, targetKeys);
       setInventory(updated);
       toast.success("Imported MCP configurations successfully");
-    } catch (err: any) {
+    } catch (err: unknown) {
       toast.error(`Import failed: ${err}`);
     }
   };
@@ -333,7 +333,7 @@ export function McpManager() {
       const updated = await api.saveMcpServer(server, targetHarnesses);
       setInventory(updated);
       toast.success(`Installed '${server.name}'`);
-    } catch (err: any) {
+    } catch (err: unknown) {
       toast.error(`Installation failed: ${err}`);
     }
   };

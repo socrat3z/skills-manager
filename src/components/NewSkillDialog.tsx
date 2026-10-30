@@ -36,8 +36,9 @@ export function NewSkillDialog({ isOpen, onClose, onCreated }: NewSkillDialogPro
       setDescription("");
       setTagsInput("");
       onClose();
-    } catch (err: any) {
-      setError(err?.message || String(err));
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
+      setError(msg);
     } finally {
       setLoading(false);
     }

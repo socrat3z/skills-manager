@@ -50,7 +50,7 @@ export const McpJsonEditorModal: React.FC<McpJsonEditorModalProps> = ({
     } else {
       loadHarnessConfig(selectedTarget);
     }
-  }, [selectedTarget, isOpen]);
+  }, [selectedTarget, isOpen, initialJson]);
 
   const loadHarnessConfig = async (harnessKey: string) => {
     setLoadingConfig(true);
@@ -63,7 +63,7 @@ export const McpJsonEditorModal: React.FC<McpJsonEditorModalProps> = ({
       } catch {
         setJsonText(data.content);
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       toast.error(`Failed to load config for ${harnessKey}: ${err}`);
     } finally {
       setLoadingConfig(false);
@@ -94,8 +94,9 @@ export const McpJsonEditorModal: React.FC<McpJsonEditorModalProps> = ({
       const parsed = JSON.parse(jsonText);
       setJsonText(JSON.stringify(parsed, null, 2));
       toast.success("JSON formatted");
-    } catch (err: any) {
-      toast.error(`JSON syntax error: ${err.message}`);
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
+      toast.error(`JSON syntax error: ${msg}`);
     }
   };
 
@@ -103,8 +104,9 @@ export const McpJsonEditorModal: React.FC<McpJsonEditorModalProps> = ({
     e.preventDefault();
     try {
       JSON.parse(jsonText);
-    } catch (err: any) {
-      toast.error(`Invalid JSON syntax: ${err.message}`);
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
+      toast.error(`Invalid JSON syntax: ${msg}`);
       return;
     }
 
@@ -115,7 +117,7 @@ export const McpJsonEditorModal: React.FC<McpJsonEditorModalProps> = ({
       try {
         await onSaveHarnessConfig(selectedTarget, jsonText);
         onClose();
-      } catch (err: any) {
+      } catch (err: unknown) {
         toast.error(`Failed to save ${selectedTarget} config: ${err}`);
       }
     }

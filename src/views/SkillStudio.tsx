@@ -130,8 +130,8 @@ export function SkillStudio() {
     try {
       const fileList = await api.listSkillFiles(selectedSkillId);
       setFiles(fileList);
-    } catch (e: any) {
-      toast.error("Failed to load skill files: " + (e?.message || String(e)));
+    } catch (e: unknown) {
+      toast.error("Failed to load skill files: " + (e instanceof Error ? e.message : String(e)));
     } finally {
       setLoadingFiles(false);
     }
@@ -152,8 +152,8 @@ export function SkillStudio() {
       const text = await api.readSkillFile(selectedSkillId, activeFile);
       setFileContent(text);
       setSavedContent(text);
-    } catch (e: any) {
-      toast.error("Failed to read file: " + (e?.message || String(e)));
+    } catch (e: unknown) {
+      toast.error("Failed to read file: " + (e instanceof Error ? e.message : String(e)));
     } finally {
       setLoadingContent(false);
     }
@@ -211,8 +211,8 @@ export function SkillStudio() {
       setSavedContent(fileContent);
       toast.success(`Saved ${activeFile}`);
       refreshManagedSkills();
-    } catch (e: any) {
-      toast.error("Save failed: " + (e?.message || String(e)));
+    } catch (e: unknown) {
+      toast.error("Save failed: " + (e instanceof Error ? e.message : String(e)));
     } finally {
       setSavingFile(false);
     }
@@ -225,8 +225,8 @@ export function SkillStudio() {
       toast.success(`Created ${newRelPath}`);
       await loadSkillFiles();
       setActiveFile(newRelPath);
-    } catch (e: any) {
-      toast.error("Failed to create file: " + (e?.message || String(e)));
+    } catch (e: unknown) {
+      toast.error("Failed to create file: " + (e instanceof Error ? e.message : String(e)));
     }
   };
 
@@ -239,8 +239,8 @@ export function SkillStudio() {
       if (activeFile === relPath) {
         setActiveFile("SKILL.md");
       }
-    } catch (e: any) {
-      toast.error("Delete failed: " + (e?.message || String(e)));
+    } catch (e: unknown) {
+      toast.error("Delete failed: " + (e instanceof Error ? e.message : String(e)));
     }
   };
 
@@ -262,8 +262,8 @@ export function SkillStudio() {
       toast.success(res);
       setShowCommitModal(false);
       setCommitMessage("");
-    } catch (e: any) {
-      toast.error("Commit failed: " + (e?.message || String(e)));
+    } catch (e: unknown) {
+      toast.error("Commit failed: " + (e instanceof Error ? e.message : String(e)));
     } finally {
       setCommitting(false);
     }

@@ -22,6 +22,20 @@ if (Test-Path $devShell) {
 # After DevShell activation, strip Scoop shims again
 $env:PATH = ($env:PATH -split ';' | Where-Object { $_ -notlike '*scoop\shims*' }) -join ';'
 
+# Ensure Git is in PATH without reintroducing Scoop's link.exe shim
+$gitSearchPaths = @(
+    "$env:USERPROFILE\scoop\apps\git\current\cmd",
+    "$env:USERPROFILE\scoop\apps\git\current\bin",
+    "C:\Program Files\Git\cmd",
+    "C:\Program Files\Git\bin"
+)
+foreach ($gitDir in $gitSearchPaths) {
+    if (Test-Path (Join-Path $gitDir "git.exe")) {
+        $env:PATH = "$gitDir;$env:PATH"
+        break
+    }
+}
+
 # Ensure clang is in PATH
 $clangSearchPaths = @(
     "C:\Program Files\LLVM\bin",

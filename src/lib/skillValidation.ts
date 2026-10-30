@@ -14,7 +14,7 @@ export interface SkillValidationIssue {
 export interface SkillValidationResult {
   isValid: boolean;
   issues: SkillValidationIssue[];
-  frontmatter: Record<string, any> | null;
+  frontmatter: Record<string, unknown> | null;
 }
 
 /**

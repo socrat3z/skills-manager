@@ -27,6 +27,20 @@ if (Test-Path $devShell) {
 # After DevShell activation, strip Scoop shims again (DevShell can re-inherit the parent PATH)
 $env:PATH = ($env:PATH -split ';' | Where-Object { $_ -notlike '*scoop\shims*' }) -join ';'
 
+# Ensure Git is in PATH without reintroducing Scoop's link.exe shim
+$gitSearchPaths = @(
+    "$env:USERPROFILE\scoop\apps\git\current\cmd",
+    "$env:USERPROFILE\scoop\apps\git\current\bin",
+    "C:\Program Files\Git\cmd",
+    "C:\Program Files\Git\bin"
+)
+foreach ($gitDir in $gitSearchPaths) {
+    if (Test-Path (Join-Path $gitDir "git.exe")) {
+        $env:PATH = "$gitDir;$env:PATH"
+        break
+    }
+}
+
 # Find latest MSVC toolset version
 $msvcBase = "C:\Program Files (x86)\Microsoft Visual Studio\2022\BuildTools\VC\Tools\MSVC"
 $msvcVersion = Get-ChildItem -Path $msvcBase -Directory -ErrorAction SilentlyContinue |

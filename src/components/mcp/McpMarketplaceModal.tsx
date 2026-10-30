@@ -65,7 +65,7 @@ export const McpMarketplaceModal: React.FC<McpMarketplaceModalProps> = ({
         cat && cat !== "All" ? cat : undefined
       );
       setAllServers(data);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Failed to fetch marketplace servers from Glama:", err);
     } finally {
       setLoading(false);

@@ -125,7 +125,7 @@ export const McpServerDialog: React.FC<McpServerDialogProps> = ({
       } else {
         toast.info("Command path is already resolved or in system PATH");
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       toast.error(`Path resolution error: ${err}`);
     }
   };
@@ -158,7 +158,7 @@ export const McpServerDialog: React.FC<McpServerDialogProps> = ({
       } else {
         toast.error(`Validation error: ${report.error}`);
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       toast.error(`Validation failed: ${err}`);
     } finally {
       setIsValidating(false);
@@ -184,7 +184,7 @@ export const McpServerDialog: React.FC<McpServerDialogProps> = ({
     setEnvPairs(envPairs.filter((_, i) => i !== index));
   };
 
-  const handleEnvChange = (index: number, field: "key" | "value" | "isSecret", val: any) => {
+  const handleEnvChange = (index: number, field: "key" | "value" | "isSecret", val: string | boolean) => {
     const updated = [...envPairs];
     updated[index] = { ...updated[index], [field]: val };
     setEnvPairs(updated);

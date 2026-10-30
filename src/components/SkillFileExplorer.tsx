@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   FileText,
   Folder,
@@ -281,7 +281,7 @@ export function SkillFileExplorer({
   const allDirPaths = useMemo(() => collectAllDirPaths(tree), [tree]);
 
   // Auto-expand ancestors of active file
-  useMemo(() => {
+  useEffect(() => {
     if (!activeFile) return;
     const parts = activeFile.split("/");
     const ancestors = new Set<string>();
@@ -289,6 +289,7 @@ export function SkillFileExplorer({
       ancestors.add(parts.slice(0, i).join("/"));
     }
     if (ancestors.size > 0) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setExpanded((prev) => {
         const next = new Set(prev);
         for (const a of ancestors) next.add(a);

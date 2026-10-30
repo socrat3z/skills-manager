@@ -11,7 +11,6 @@ interface SkillAiAssistantProps {
 
 export function SkillAiAssistant({
   currentContent,
-  activeFile: _activeFile,
   onApplyContent,
 }: SkillAiAssistantProps) {
   const [prompt, setPrompt] = useState("");
@@ -33,8 +32,8 @@ export function SkillAiAssistant({
         currentContent
       );
       setAiResult(res);
-    } catch (e: any) {
-      alert("AI generation failed: " + e);
+    } catch (e: unknown) {
+      alert("AI generation failed: " + (e instanceof Error ? e.message : String(e)));
     } finally {
       setLoading(false);
     }

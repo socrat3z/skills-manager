@@ -50,7 +50,7 @@ export const McpServerCard: React.FC<McpServerCardProps> = ({
       } else {
         toast.error(`Server offline: ${result.message}`);
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       toast.error(`Ping failed: ${err}`);
     } finally {
       setIsPinging(false);

@@ -24,6 +24,7 @@ export const McpPresetModal: React.FC<McpPresetModalProps> = ({
   const [selectedHarnesses, setSelectedHarnesses] = useState<string[]>([]);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setSelectedHarnesses(harnesses.filter((h) => h.installed).map((h) => h.key));
   }, [harnesses]);
 
